@@ -6,10 +6,9 @@ st.set_page_config(page_title="Fake News Detector", page_icon="📰", layout="ce
 
 @st.cache_resource
 def load_model():
-    base = os.path.dirname(os.path.abspath(__file__))
-    with open(os.path.join(base, "model", "model.pkl"), "rb") as f:
+    with open("model.pkl", "rb") as f:
         model = pickle.load(f)
-    with open(os.path.join(base, "model", "vectorizer.pkl"), "rb") as f:
+    with open("vectorizer.pkl", "rb") as f:
         vectorizer = pickle.load(f)
     return model, vectorizer
 
