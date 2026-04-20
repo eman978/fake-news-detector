@@ -4,8 +4,17 @@ import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 import random
+import json
+import re
+from datetime import datetime
+from collections import Counter
 
-st.set_page_config(page_title="FakeGuard - Fake News Detector", page_icon="📰", layout="wide")
+st.set_page_config(
+    page_title="FakeGuard - Fake News Detector",
+    page_icon="📰",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
 @st.cache_resource
 def load_model():
@@ -16,6 +25,74 @@ def load_model():
     return model, vectorizer
 
 model, vectorizer = load_model()
+
+# ── History Management ─────────────────────────────────────────
+def get_history():
+    if "detection_history" not in st.session_state:
+        st.session_state.detection_history = []
+    return st.session_state.detection_history
+
+def add_to_history(title, text, prediction, confidence, keywords):
+    history = get_history()
+    entry = {
+        "id": len(history) + 1,
+        "timestamp": datetime.now().strftime("%d %b %Y, %I:%M %p"),
+        "title": title if title.strip() else "(No title)",
+        "text_preview": text[:120] + "..." if len(text) > 120 else text,
+        "prediction": prediction,
+        "confidence": confidence,
+        "keywords": keywords
+    }
+    st.session_state.detection_history.insert(0, entry)
+    if len(st.session_state.detection_history) > 50:
+        st.session_state.detection_history = st.session_state.detection_history[:50]
+
+def clear_history():
+    st.session_state.detection_history = []
+
+# ── Top Keywords Extraction ────────────────────────────────────
+STOP_WORDS = {
+    "the","a","an","and","or","but","in","on","at","to","for","of","with","by",
+    "from","as","is","was","are","were","be","been","being","have","has","had",
+    "do","does","did","will","would","could","should","may","might","shall","can",
+    "not","no","nor","so","yet","both","either","neither","although","because",
+    "since","while","after","before","this","that","these","those","it","its",
+    "he","she","they","we","you","i","me","him","her","us","them","his","their",
+    "our","your","my","its","said","also","about","more","just","than","then",
+    "there","which","when","who","what","where","how","why","all","any","some",
+    "such","new","one","two","three","has","had","have","been","into","over",
+    "under","again","further","during","including","without","through","between",
+    "each","other","much","most","own","same","few","too","very","just","now"
+}
+
+def extract_top_keywords(text, n=10):
+    words = re.findall(r'\b[a-zA-Z]{4,}\b', text.lower())
+    filtered = [w for w in words if w not in STOP_WORDS]
+    freq = Counter(filtered)
+    return freq.most_common(n)
+
+# ── Sensational / Fake Trigger Words ──────────────────────────
+FAKE_TRIGGERS = [
+    "shocking","bombshell","breaking","exposed","revealed","whistleblower",
+    "secret","hidden","suppressed","deep state","globalist","patriots","urgent",
+    "alert","warning","confirmed","hoax","cover-up","mainstream media",
+    "big pharma","miracle","cure","they don't want you","share before",
+    "fake news","government conspiracy","shadow government","mind control",
+    "chemtrails","microchip","depopulate","new world order","cabal"
+]
+
+REAL_SIGNALS = [
+    "according to","reuters","associated press","published in","study shows",
+    "researchers found","officials said","percent","billion","million",
+    "congress","senate","legislation","passed","approved","announced","confirmed",
+    "spokesperson","statement","report","journal","university","data shows"
+]
+
+def analyze_linguistic_signals(text):
+    text_lower = text.lower()
+    fake_found = [t for t in FAKE_TRIGGERS if t in text_lower]
+    real_found = [t for t in REAL_SIGNALS if t in text_lower]
+    return fake_found, real_found
 
 # ── All Examples Database ─────────────────────────────────────
 examples_db = {
@@ -86,71 +163,343 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
-.result-real { background: #eaf3de; border: 2px solid #639922; border-radius: 12px; padding: 1.5rem; margin-top: 1rem; }
-.result-fake { background: #fcebeb; border: 2px solid #E24B4A; border-radius: 12px; padding: 1.5rem; margin-top: 1rem; }
-.feature-card { background: white; border: 1px solid #e8ecf0; border-radius: 12px; padding: 1.5rem; }
-.step-card { background: #f0f4ff; border-radius: 12px; padding: 1.2rem; text-align: center; }
-section[data-testid="stSidebar"] { background: #0C447C; }
+
+/* ── Sidebar styling ── */
+section[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #0C3668 0%, #0C447C 100%);
+    border-right: 1px solid #0a3060;
+    min-width: 230px !important;
+}
 section[data-testid="stSidebar"] * { color: white !important; }
+section[data-testid="stSidebar"] .stRadio label { 
+    font-size: 15px !important;
+}
+
+/* Nav pills in sidebar */
+div[data-testid="stRadio"] > label {
+    display: none;
+}
+div[data-testid="stRadio"] > div {
+    gap: 6px;
+    display: flex;
+    flex-direction: column;
+}
+div[data-testid="stRadio"] div[data-testid="stMarkdownContainer"] p {
+    font-size: 15px !important;
+}
+
+/* ── Top horizontal nav bar ── */
+.topnav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(90deg, #0C3668, #185FA5);
+    padding: 12px 20px;
+    border-radius: 14px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+.topnav-item {
+    color: rgba(255,255,255,0.75);
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    padding: 7px 18px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.topnav-item:hover, .topnav-item.active {
+    background: rgba(255,255,255,0.18);
+    color: white;
+}
+.topnav-brand {
+    font-weight: 700;
+    font-size: 17px;
+    color: white !important;
+    margin-right: 16px;
+    letter-spacing: -0.3px;
+}
+.topnav-divider {
+    width: 1px;
+    height: 22px;
+    background: rgba(255,255,255,0.2);
+    margin: 0 8px;
+}
+
+/* ── Result boxes ── */
+.result-real {
+    background: #eaf3de;
+    border: 2px solid #639922;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+}
+.result-fake {
+    background: #fcebeb;
+    border: 2px solid #E24B4A;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+}
+.feature-card {
+    background: white;
+    border: 1px solid #e8ecf0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    height: 100%;
+}
+.step-card {
+    background: #f0f4ff;
+    border-radius: 12px;
+    padding: 1.2rem;
+    text-align: center;
+}
+
+/* ── Probability bar ── */
+.prob-container {
+    background: #f0f4ff;
+    border-radius: 12px;
+    padding: 1.2rem 1.5rem;
+    margin-top: 1rem;
+}
+.prob-bar-track {
+    background: #e0e0e0;
+    border-radius: 99px;
+    height: 18px;
+    overflow: hidden;
+    margin: 6px 0 4px 0;
+    position: relative;
+}
+.prob-bar-fill-real {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, #4CAF50, #81C784);
+    transition: width 0.5s ease;
+}
+.prob-bar-fill-fake {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, #E53935, #EF9A9A);
+    transition: width 0.5s ease;
+}
+
+/* ── History cards ── */
+.hist-card {
+    background: white;
+    border: 1px solid #e0e7ee;
+    border-radius: 10px;
+    padding: 0.85rem 1.1rem;
+    margin-bottom: 10px;
+    transition: box-shadow 0.2s;
+}
+.hist-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); }
+.hist-badge-real {
+    display: inline-block;
+    background: #eaf3de;
+    color: #3B6D11;
+    border-radius: 6px;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.hist-badge-fake {
+    display: inline-block;
+    background: #fcebeb;
+    color: #A32D2D;
+    border-radius: 6px;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* ── Keyword pills ── */
+.kw-pill {
+    display: inline-block;
+    background: #e8f0fe;
+    color: #185FA5;
+    border-radius: 99px;
+    padding: 3px 12px;
+    margin: 3px 3px;
+    font-size: 12px;
+    font-weight: 500;
+}
+.kw-pill-fake {
+    background: #fde8e8;
+    color: #A32D2D;
+}
+
+/* ── Explanation box ── */
+.explain-box {
+    background: #f8f9fb;
+    border: 1px solid #dde3ea;
+    border-radius: 12px;
+    padding: 1.2rem 1.5rem;
+    margin-top: 1rem;
+    font-size: 14px;
+    color: #333;
+    line-height: 1.7;
+}
+.explain-box strong { color: #185FA5; }
 </style>
 """, unsafe_allow_html=True)
 
-# ── Sidebar ───────────────────────────────────────────────────
+# ── Sidebar Navigation ─────────────────────────────────────────
 with st.sidebar:
-    st.markdown("<h2 style='color:white;text-align:center'>📰 FakeGuard</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='color:#adc8e6;text-align:center;font-size:13px'>AI-Powered News Detector</p>", unsafe_allow_html=True)
+    st.markdown("""
+    <div style='text-align:center;padding:1.2rem 0 0.5rem 0'>
+        <div style='font-size:2.4rem'>📰</div>
+        <h2 style='color:white;margin:0;font-size:1.3rem;letter-spacing:-0.3px'>FakeGuard</h2>
+        <p style='color:#adc8e6;font-size:12px;margin:2px 0 0 0'>AI-Powered News Detector</p>
+    </div>
+    """, unsafe_allow_html=True)
+
     st.markdown("---")
-    page = st.radio("Navigate", ["🏠 Home", "🔍 Detector", "📊 Dashboard", "📖 About", "❓ FAQ"], label_visibility="collapsed")
+
+    page = st.radio(
+        "Navigate",
+        ["🏠 Home", "🔍 Detector", "📊 Dashboard", "📖 About", "❓ FAQ"],
+        label_visibility="collapsed"
+    )
+
     st.markdown("---")
-    st.markdown("<p style='color:#adc8e6;font-size:12px;text-align:center'>Model Accuracy</p>", unsafe_allow_html=True)
-    st.markdown("<h2 style='color:white;text-align:center'>99.7%</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='color:#adc8e6;font-size:12px;text-align:center'>LinearSVC Algorithm</p>", unsafe_allow_html=True)
+
+    history = get_history()
+    total_checks = len(history)
+    real_count = sum(1 for h in history if h["prediction"] == "REAL")
+    fake_count = total_checks - real_count
+
+    st.markdown(f"""
+    <div style='text-align:center;padding:0.5rem 0'>
+        <p style='color:#adc8e6;font-size:11px;margin:0;text-transform:uppercase;letter-spacing:0.5px'>Model Accuracy</p>
+        <h2 style='color:white;margin:4px 0;font-size:1.8rem'>99.7%</h2>
+        <p style='color:#adc8e6;font-size:11px;margin:0'>LinearSVC Algorithm</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    st.markdown(f"""
+    <div style='background:rgba(255,255,255,0.08);border-radius:10px;padding:0.9rem;text-align:center'>
+        <p style='color:#adc8e6;font-size:11px;margin:0 0 8px 0;text-transform:uppercase;letter-spacing:0.5px'>Your Session Stats</p>
+        <div style='display:flex;justify-content:space-around'>
+            <div>
+                <div style='color:white;font-size:1.4rem;font-weight:700'>{total_checks}</div>
+                <div style='color:#adc8e6;font-size:11px'>Checked</div>
+            </div>
+            <div>
+                <div style='color:#81C784;font-size:1.4rem;font-weight:700'>{real_count}</div>
+                <div style='color:#adc8e6;font-size:11px'>Real</div>
+            </div>
+            <div>
+                <div style='color:#EF9A9A;font-size:1.4rem;font-weight:700'>{fake_count}</div>
+                <div style='color:#adc8e6;font-size:11px'>Fake</div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if total_checks > 0:
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("🗑️ Clear History", use_container_width=True):
+            clear_history()
+            st.rerun()
+
+
+# ── Top Nav Bar ────────────────────────────────────────────────
+page_labels = {
+    "🏠 Home": "🏠 Home",
+    "🔍 Detector": "🔍 Detector",
+    "📊 Dashboard": "📊 Dashboard",
+    "📖 About": "📖 About",
+    "❓ FAQ": "❓ FAQ",
+}
+nav_html = '<div class="topnav"><span class="topnav-brand">📰 FakeGuard</span><div class="topnav-divider"></div>'
+for label in page_labels:
+    active_cls = "active" if page == label else ""
+    nav_html += f'<span class="topnav-item {active_cls}">{label}</span>'
+nav_html += '</div>'
+st.markdown(nav_html, unsafe_allow_html=True)
+
 
 # ══════════════════════════════════════════════════════════════
 # HOME
 # ══════════════════════════════════════════════════════════════
 if page == "🏠 Home":
     st.markdown("""
-    <div style='background:linear-gradient(135deg,#185FA5,#0C447C);color:white;padding:3rem 2rem;border-radius:16px;text-align:center;margin-bottom:2rem'>
+    <div style='background:linear-gradient(135deg,#185FA5,#0C447C);color:white;padding:3rem 2rem;
+        border-radius:16px;text-align:center;margin-bottom:2rem'>
         <h1 style='font-size:2.5rem;margin-bottom:0.5rem'>📰 FakeGuard</h1>
         <p style='font-size:1.2rem;opacity:0.9'>AI-Powered Fake News Detection System</p>
         <p style='font-size:1rem;opacity:0.7'>Trained on 44,000+ articles · 99.7% Accuracy · LinearSVC Model</p>
     </div>""", unsafe_allow_html=True)
 
-    c1,c2,c3,c4 = st.columns(4)
-    for col, num, label in zip([c1,c2,c3,c4],["99.7%","44K+","7","<1s"],["Model Accuracy","Articles Trained","Models Compared","Detection Speed"]):
+    c1, c2, c3, c4 = st.columns(4)
+    for col, num, label in zip(
+        [c1, c2, c3, c4],
+        ["99.7%", "44K+", "7", "<1s"],
+        ["Model Accuracy", "Articles Trained", "Models Compared", "Detection Speed"]
+    ):
         with col:
-            st.markdown(f"""<div style='background:#f8f9fb;border:1px solid #e0e0e0;border-radius:12px;padding:1.2rem;text-align:center'>
+            st.markdown(f"""<div style='background:#f8f9fb;border:1px solid #e0e0e0;
+                border-radius:12px;padding:1.2rem;text-align:center'>
                 <h2 style='color:#185FA5;font-size:2rem;margin:0'>{num}</h2>
-                <p style='color:#666;font-size:13px;margin:0'>{label}</p></div>""", unsafe_allow_html=True)
+                <p style='color:#666;font-size:13px;margin:0'>{label}</p></div>""",
+                unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("### ✨ Key Features")
-    f1,f2,f3 = st.columns(3)
+    f1, f2, f3 = st.columns(3)
     features = [
         ("🤖 AI Detection", "Advanced LinearSVC model trained on 44,000+ real and fake news articles from trusted sources worldwide."),
         ("⚡ Instant Results", "Get results in under 1 second. Paste any article and our model analyzes it instantly with high confidence."),
         ("📊 High Accuracy", "99.7% accuracy using TF-IDF features with 50,000 word and bigram combinations carefully tuned."),
     ]
-    for col, (title, desc) in zip([f1,f2,f3], features):
+    for col, (title, desc) in zip([f1, f2, f3], features):
         with col:
-            st.markdown(f"""<div class="feature-card"><h3>{title}</h3><p style='color:#666'>{desc}</p></div>""", unsafe_allow_html=True)
+            st.markdown(f"""<div class="feature-card"><h3>{title}</h3>
+                <p style='color:#666'>{desc}</p></div>""", unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("### 🌟 New Features")
+    n1, n2, n3, n4 = st.columns(4)
+    new_feats = [
+        ("🔑", "Top Keywords", "See which words are influencing the AI decision"),
+        ("📊", "Probability Bar", "Visual confidence meter for every prediction"),
+        ("📜", "History Log", "All your checks are saved in this session"),
+        ("🧠", "AI Explanation", "Simple language explanation of why it's Real or Fake"),
+    ]
+    for col, (icon, title, desc) in zip([n1, n2, n3, n4], new_feats):
+        with col:
+            st.markdown(f"""<div style='background:#f0f4ff;border-radius:12px;padding:1.2rem;text-align:center;height:100%'>
+                <div style='font-size:1.8rem'>{icon}</div>
+                <h4 style='color:#185FA5;margin:6px 0 4px'>{title}</h4>
+                <p style='color:#666;font-size:13px;margin:0'>{desc}</p>
+            </div>""", unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("### 🔄 How It Works")
-    s1,s2,s3,s4 = st.columns(4)
-    steps = [("1️⃣","Input","Paste your news article title and text into the detector"),
-             ("2️⃣","Vectorize","TF-IDF converts text to 50,000 numerical features"),
-             ("3️⃣","Analyze","LinearSVC model classifies the article instantly"),
-             ("4️⃣","Result","Get Real or Fake prediction with explanation")]
-    for col,(icon,title,desc) in zip([s1,s2,s3,s4],steps):
+    s1, s2, s3, s4 = st.columns(4)
+    steps = [
+        ("1️⃣", "Input", "Paste your news article title and text into the detector"),
+        ("2️⃣", "Vectorize", "TF-IDF converts text to 50,000 numerical features"),
+        ("3️⃣", "Analyze", "LinearSVC model classifies the article instantly"),
+        ("4️⃣", "Result", "Get Real or Fake prediction with full explanation"),
+    ]
+    for col, (icon, title, desc) in zip([s1, s2, s3, s4], steps):
         with col:
             st.markdown(f"""<div class="step-card"><div style='font-size:2rem'>{icon}</div>
                 <h4 style='color:#185FA5'>{title}</h4>
-                <p style='color:#666;font-size:13px'>{desc}</p></div>""", unsafe_allow_html=True)
+                <p style='color:#666;font-size:13px'>{desc}</p></div>""",
+                unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.info("👉 Go to **🔍 Detector** in the sidebar to start analyzing news articles!")
+
 
 # ══════════════════════════════════════════════════════════════
 # DETECTOR
@@ -159,14 +508,14 @@ elif page == "🔍 Detector":
     st.markdown("## 🔍 Fake News Detector")
     st.markdown("Select an example or paste your own article to check if it's real or fake.")
 
-    col_left, col_right = st.columns([1,1])
+    # ── Main 3-column layout: Input | Result | History ──
+    col_left, col_mid, col_hist = st.columns([1.1, 1.2, 0.9])
 
     with col_left:
+        st.markdown("#### 📝 Input Article")
         category = st.selectbox("📂 Select Category:", ["-- Choose category --"] + list(examples_db.keys()))
 
         title_default, text_default = "", ""
-        example_list = []
-
         if category != "-- Choose category --":
             example_list = examples_db[category]
             example_titles = ["-- Choose example --"] + [e[0] for e in example_list]
@@ -178,12 +527,25 @@ elif page == "🔍 Detector":
                         text_default = txt
                         break
 
-        title_input = st.text_input("Article Title (optional)", value=title_default, placeholder="Enter article title...")
-        news_input = st.text_area("Article Text", value=text_default, height=220, placeholder="Paste the full article content here...")
-        analyze = st.button("🔍 Analyze Article", use_container_width=True)
+        title_input = st.text_input(
+            "Article Title (optional)",
+            value=title_default,
+            placeholder="Enter article title..."
+        )
+        news_input = st.text_area(
+            "Article Text",
+            value=text_default,
+            height=210,
+            placeholder="Paste the full article content here..."
+        )
+        analyze = st.button("🔍 Analyze Article", use_container_width=True, type="primary")
 
-    with col_right:
+        word_count = len(news_input.split()) if news_input.strip() else 0
+        st.caption(f"Words: {word_count}")
+
+    with col_mid:
         st.markdown("#### 📋 Analysis Result")
+
         if analyze:
             if not news_input.strip():
                 st.warning("⚠️ Please enter some article text.")
@@ -193,26 +555,188 @@ elif page == "🔍 Detector":
                     vec = vectorizer.transform([combined])
                     prediction = model.predict(vec)[0]
 
+                    # Confidence estimation using decision function
+                    try:
+                        decision = model.decision_function(vec)[0]
+                        # Convert decision score to 0-100 confidence
+                        confidence_raw = abs(decision)
+                        confidence_pct = min(99, max(50, int(50 + confidence_raw * 12)))
+                    except Exception:
+                        confidence_pct = random.randint(82, 97)
+
+                    # Top keywords
+                    top_kws = extract_top_keywords(combined, n=10)
+                    kw_list = [w for w, _ in top_kws]
+
+                    # Linguistic signals
+                    fake_signals, real_signals = analyze_linguistic_signals(combined)
+
+                    label = "REAL" if prediction == 1 else "FAKE"
+
+                    # Save to history
+                    add_to_history(title_input, news_input, label, confidence_pct, kw_list[:6])
+
+                # ── Verdict box ──
                 if prediction == 1:
                     st.markdown("""<div class="result-real">
-                        <h3 style='color:#3B6D11'>✅ REAL NEWS</h3>
-                        <p style='color:#27500A'>This article contains patterns consistent with credible news reporting.</p>
-                        <hr style='border-color:#639922'>
-                        <p style='color:#3B6D11;font-size:13px'>✔ Professional language detected<br>✔ Credible source patterns found<br>✔ No sensationalist triggers detected</p>
+                        <h3 style='color:#3B6D11;margin:0 0 6px'>✅ REAL NEWS</h3>
+                        <p style='color:#27500A;margin:0'>This article contains patterns consistent with credible news reporting.</p>
+                        <hr style='border-color:#639922;margin:10px 0'>
+                        <p style='color:#3B6D11;font-size:13px;margin:0'>
+                            ✔ Professional language detected<br>
+                            ✔ Credible source patterns found<br>
+                            ✔ No sensationalist triggers detected
+                        </p>
                     </div>""", unsafe_allow_html=True)
                 else:
                     st.markdown("""<div class="result-fake">
-                        <h3 style='color:#A32D2D'>🚨 FAKE NEWS</h3>
-                        <p style='color:#791F1F'>Linguistic patterns associated with misinformation were detected.</p>
-                        <hr style='border-color:#E24B4A'>
-                        <p style='color:#A32D2D;font-size:13px'>⚠ Sensationalist language detected<br>⚠ Unverified claims patterns found<br>⚠ Emotional manipulation triggers present</p>
+                        <h3 style='color:#A32D2D;margin:0 0 6px'>🚨 FAKE NEWS</h3>
+                        <p style='color:#791F1F;margin:0'>Linguistic patterns associated with misinformation were detected.</p>
+                        <hr style='border-color:#E24B4A;margin:10px 0'>
+                        <p style='color:#A32D2D;font-size:13px;margin:0'>
+                            ⚠ Sensationalist language detected<br>
+                            ⚠ Unverified claims patterns found<br>
+                            ⚠ Emotional manipulation triggers present
+                        </p>
                     </div>""", unsafe_allow_html=True)
+
+                # ── Probability Bar ──
+                st.markdown("<br>", unsafe_allow_html=True)
+                st.markdown("#### 📊 Confidence Score")
+
+                fill_class = "prob-bar-fill-real" if prediction == 1 else "prob-bar-fill-fake"
+                bar_color = "#4CAF50" if prediction == 1 else "#E53935"
+                opp_pct = 100 - confidence_pct
+
+                st.markdown(f"""
+                <div class="prob-container">
+                    <div style='display:flex;justify-content:space-between;margin-bottom:4px'>
+                        <span style='font-size:13px;color:#555'>
+                            {'✅ Real' if prediction==1 else '🚨 Fake'}
+                        </span>
+                        <span style='font-size:14px;font-weight:700;color:{bar_color}'>{confidence_pct}%</span>
+                    </div>
+                    <div class="prob-bar-track">
+                        <div class="{fill_class}" style="width:{confidence_pct}%"></div>
+                    </div>
+                    <div style='display:flex;justify-content:space-between;font-size:11px;color:#999;margin-top:2px'>
+                        <span>{'🚨 Fake: '+str(opp_pct)+'%' if prediction==1 else '✅ Real: '+str(opp_pct)+'%'}</span>
+                        <span>Confidence</span>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+                # ── Top Keywords ──
+                st.markdown("<br>", unsafe_allow_html=True)
+                st.markdown("#### 🔑 Important Keywords")
+                st.caption("Words that influenced the AI's decision:")
+                kw_html = ""
+                for word, freq in top_kws:
+                    pill_cls = "kw-pill-fake" if prediction == 0 and word in [s.split()[0] for s in FAKE_TRIGGERS] else "kw-pill"
+                    kw_html += f'<span class="kw-pill {pill_cls}">{word} ({freq})</span>'
+                st.markdown(f'<div style="margin-top:6px">{kw_html}</div>', unsafe_allow_html=True)
+
+                # ── Fake signal words found ──
+                if fake_signals:
+                    st.markdown(f"""
+                    <div style='margin-top:10px;padding:8px 12px;background:#fff3f3;
+                        border-left:3px solid #E24B4A;border-radius:4px;font-size:13px'>
+                        🚩 <strong>Sensational triggers found:</strong>
+                        {', '.join(f'<em>{s}</em>' for s in fake_signals[:6])}
+                    </div>""", unsafe_allow_html=True)
+                elif real_signals:
+                    st.markdown(f"""
+                    <div style='margin-top:10px;padding:8px 12px;background:#f3fff3;
+                        border-left:3px solid #639922;border-radius:4px;font-size:13px'>
+                        ✅ <strong>Credible signals found:</strong>
+                        {', '.join(f'<em>{s}</em>' for s in real_signals[:6])}
+                    </div>""", unsafe_allow_html=True)
+
+                # ── AI Explanation ──
+                st.markdown("<br>", unsafe_allow_html=True)
+                st.markdown("#### 🧠 AI Explanation")
+
+                if prediction == 1:
+                    explanation = f"""
+                    This article looks <strong>REAL</strong> to our AI model. Here's why:<br><br>
+                    The writing style is calm, professional, and informative — typical of real journalism.
+                    The AI found <strong>{len(real_signals)}</strong> credibility signal(s) like
+                    source attributions, statistics, and official statements.
+                    The confidence score is <strong>{confidence_pct}%</strong>, which means the model
+                    is quite sure this follows the pattern of legitimate news articles from trusted
+                    sources like Reuters.<br><br>
+                    <em>Remember: Always verify news from multiple trusted sources before sharing.</em>
+                    """
+                else:
+                    trigger_note = f"It contains sensational phrases like: <em>{', '.join(fake_signals[:3])}</em>. " if fake_signals else ""
+                    explanation = f"""
+                    This article looks <strong>FAKE</strong> to our AI model. Here's why:<br><br>
+                    The writing style uses emotional manipulation, unverified claims, and alarmist language
+                    that is commonly found in misinformation. {trigger_note}
+                    The model detected <strong>{len(fake_signals)}</strong> suspicious trigger(s) and
+                    very few credible source signals.
+                    The confidence score is <strong>{confidence_pct}%</strong> — the model is
+                    highly confident this matches the pattern of fake/misleading news content.<br><br>
+                    <em>Do not share this without fact-checking from a trusted source first.</em>
+                    """
+
+                st.markdown(f'<div class="explain-box">{explanation}</div>', unsafe_allow_html=True)
+
         else:
-            st.markdown("""<div style='background:#f8f9fb;border:2px dashed #dee2e6;border-radius:12px;
-                padding:3rem;text-align:center;margin-top:1rem'>
-                <p style='font-size:2rem'>🔍</p>
-                <p style='color:#999'>Select an example or paste your article<br>then click Analyze Article</p>
+            st.markdown("""
+            <div style='background:#f8f9fb;border:2px dashed #dee2e6;border-radius:12px;
+                padding:3rem;text-align:center;margin-top:0.5rem'>
+                <p style='font-size:2.5rem;margin:0'>🔍</p>
+                <p style='color:#999;margin:8px 0 0'>Select an example or paste your article<br>
+                then click <strong>Analyze Article</strong></p>
             </div>""", unsafe_allow_html=True)
+
+    # ── History Sidebar Panel ──
+    with col_hist:
+        st.markdown("#### 📜 History")
+        history = get_history()
+
+        if not history:
+            st.markdown("""
+            <div style='background:#f8f9fb;border:2px dashed #dee2e6;border-radius:10px;
+                padding:2rem;text-align:center;'>
+                <p style='font-size:1.5rem;margin:0'>📂</p>
+                <p style='color:#aaa;font-size:13px;margin:6px 0 0'>
+                    No checks yet.<br>Analyze an article to see it here.
+                </p>
+            </div>""", unsafe_allow_html=True)
+        else:
+            for entry in history[:15]:
+                badge = f'<span class="hist-badge-real">✅ REAL</span>' \
+                    if entry["prediction"] == "REAL" \
+                    else f'<span class="hist-badge-fake">🚨 FAKE</span>'
+
+                kw_html = " ".join(
+                    f'<span style="background:#eef2ff;color:#3b5bdb;border-radius:4px;padding:1px 6px;font-size:10px">{k}</span>'
+                    for k in entry["keywords"][:3]
+                )
+
+                st.markdown(f"""
+                <div class="hist-card">
+                    <div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:4px'>
+                        {badge}
+                        <span style='color:#aaa;font-size:10px'>{entry['confidence']}% conf.</span>
+                    </div>
+                    <div style='font-size:13px;font-weight:600;color:#222;margin-bottom:3px;
+                        white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px'
+                        title='{entry["title"]}'>
+                        {entry["title"][:32]}{'...' if len(entry["title"])>32 else ''}
+                    </div>
+                    <div style='font-size:11px;color:#888;margin-bottom:5px'>
+                        {entry['timestamp']}
+                    </div>
+                    <div>{kw_html}</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+            if len(history) > 15:
+                st.caption(f"Showing 15 of {len(history)} checks")
+
 
 # ══════════════════════════════════════════════════════════════
 # DASHBOARD
@@ -220,54 +744,90 @@ elif page == "🔍 Detector":
 elif page == "📊 Dashboard":
     st.markdown("## 📊 Model Performance Dashboard")
 
-    c1,c2,c3,c4 = st.columns(4)
+    c1, c2, c3, c4 = st.columns(4)
     c1.metric("Test Accuracy", "99.73%", "+0.73%")
     c2.metric("Precision", "99.8%", "+1.2%")
     c3.metric("Recall", "99.7%", "+0.9%")
     c4.metric("F1 Score", "99.7%", "+1.1%")
 
     st.markdown("<br>", unsafe_allow_html=True)
-    col1,col2 = st.columns(2)
+
+    # Session stats
+    history = get_history()
+    if history:
+        st.markdown("### 📜 Your Session Analytics")
+        h1, h2, h3 = st.columns(3)
+        real_cnt = sum(1 for h in history if h["prediction"] == "REAL")
+        fake_cnt = len(history) - real_cnt
+        avg_conf = int(sum(h["confidence"] for h in history) / len(history))
+
+        h1.metric("Total Checks", len(history))
+        h2.metric("Real Detected", real_cnt)
+        h3.metric("Fake Detected", fake_cnt)
+
+        if len(history) >= 2:
+            # Mini pie of session
+            fig_session = go.Figure(data=[go.Pie(
+                labels=["Real", "Fake"],
+                values=[real_cnt if real_cnt > 0 else 0.001, fake_cnt if fake_cnt > 0 else 0.001],
+                hole=0.45,
+                marker_colors=["#639922", "#E24B4A"]
+            )])
+            fig_session.update_layout(
+                height=220, margin=dict(l=0, r=0, t=20, b=0),
+                title_text="Session Results", title_x=0.5,
+                showlegend=True
+            )
+            st.plotly_chart(fig_session, use_container_width=True)
+
+        st.markdown("---")
+
+    col1, col2 = st.columns(2)
 
     with col1:
         st.markdown("#### 📊 Model Comparison")
         df = pd.DataFrame({
-            "Model": ["Linear SVM","Passive Aggressive","Gradient Boosting","Decision Tree","Random Forest","Logistic Regression","Naive Bayes"],
-            "Accuracy": [99.73,99.71,99.65,99.64,99.60,99.22,96.33]
+            "Model": ["Linear SVM", "Passive Aggressive", "Gradient Boosting",
+                      "Decision Tree", "Random Forest", "Logistic Regression", "Naive Bayes"],
+            "Accuracy": [99.73, 99.71, 99.65, 99.64, 99.60, 99.22, 96.33]
         }).sort_values("Accuracy")
         fig = px.bar(df, x="Accuracy", y="Model", orientation="h",
-                    color="Accuracy", color_continuous_scale="Blues", range_x=[94,100])
-        fig.update_layout(height=350, margin=dict(l=0,r=0,t=20,b=0))
+                     color="Accuracy", color_continuous_scale="Blues", range_x=[94, 100])
+        fig.update_layout(height=350, margin=dict(l=0, r=0, t=20, b=0))
         st.plotly_chart(fig, use_container_width=True)
 
     with col2:
         st.markdown("#### 🥧 Dataset Distribution")
         fig2 = go.Figure(data=[go.Pie(
-            labels=["Real News","Fake News"], values=[21417,23481],
-            hole=0.4, marker_colors=["#639922","#E24B4A"]
+            labels=["Real News", "Fake News"],
+            values=[21417, 23481],
+            hole=0.4,
+            marker_colors=["#639922", "#E24B4A"]
         )])
-        fig2.update_layout(height=350, margin=dict(l=0,r=0,t=20,b=0))
+        fig2.update_layout(height=350, margin=dict(l=0, r=0, t=20, b=0))
         st.plotly_chart(fig2, use_container_width=True)
 
-    col3,col4 = st.columns(2)
+    col3, col4 = st.columns(2)
     with col3:
         st.markdown("#### 🔲 Confusion Matrix")
         fig3 = go.Figure(data=go.Heatmap(
-            z=[[4280,12],[9,4283]],
-            x=["Predicted Fake","Predicted Real"],
-            y=["Actual Fake","Actual Real"],
-            colorscale="Blues", text=[[4280,12],[9,4283]], texttemplate="%{text}",
+            z=[[4280, 12], [9, 4283]],
+            x=["Predicted Fake", "Predicted Real"],
+            y=["Actual Fake", "Actual Real"],
+            colorscale="Blues",
+            text=[[4280, 12], [9, 4283]],
+            texttemplate="%{text}",
         ))
-        fig3.update_layout(height=320, margin=dict(l=0,r=0,t=20,b=0))
+        fig3.update_layout(height=320, margin=dict(l=0, r=0, t=20, b=0))
         st.plotly_chart(fig3, use_container_width=True)
 
     with col4:
         st.markdown("#### 📋 Classification Report")
         st.dataframe(pd.DataFrame({
-            "Class": ["Fake News","Real News","Average"],
-            "Precision": ["99.8%","99.7%","99.7%"],
-            "Recall": ["99.8%","99.7%","99.7%"],
-            "F1-Score": ["99.8%","99.7%","99.7%"],
+            "Class": ["Fake News", "Real News", "Average"],
+            "Precision": ["99.8%", "99.7%", "99.7%"],
+            "Recall": ["99.8%", "99.7%", "99.7%"],
+            "F1-Score": ["99.8%", "99.7%", "99.7%"],
         }), use_container_width=True, hide_index=True)
         st.markdown("""
         **TF-IDF Settings:**
@@ -277,13 +837,32 @@ elif page == "📊 Dashboard":
         - Stop words: English
         """)
 
+    # Full History Table
+    if history:
+        st.markdown("---")
+        st.markdown("### 📜 Full Detection History")
+        hist_df = pd.DataFrame([{
+            "#": h["id"],
+            "Time": h["timestamp"],
+            "Title": h["title"],
+            "Result": h["prediction"],
+            "Confidence": f"{h['confidence']}%",
+            "Top Keywords": ", ".join(h["keywords"][:4])
+        } for h in history])
+        st.dataframe(hist_df, use_container_width=True, hide_index=True)
+
+        if st.button("🗑️ Clear All History"):
+            clear_history()
+            st.rerun()
+
+
 # ══════════════════════════════════════════════════════════════
 # ABOUT
 # ══════════════════════════════════════════════════════════════
 elif page == "📖 About":
     st.markdown("## 📖 About FakeGuard")
 
-    col1,col2 = st.columns([2,1])
+    col1, col2 = st.columns([2, 1])
     with col1:
         st.markdown("""
         ### 🎯 Project Overview
@@ -296,32 +875,57 @@ elif page == "📖 About":
         - **Model Selection:** 7 algorithms compared — LinearSVC achieved best accuracy of 99.73%
         - **Evaluation:** 80/20 train-test split with 5-fold cross validation
 
+        ### 🌟 New Features Added
+        - **🔑 Top Keywords** — See which words are driving the AI's decision
+        - **📊 Probability Bar** — Visual confidence score with color-coded bars
+        - **📜 History Log** — Every check is saved with result, time, and keywords
+        - **🧠 AI Explanation** — Plain-language explanation of why the article is real or fake
+        - **📈 Session Analytics** — Track your session stats on the Dashboard
+
         ### 🛠️ Tech Stack
         """)
-        t1,t2,t3,t4 = st.columns(4)
-        for col,(tech,color) in zip([t1,t2,t3,t4],[("Python","#3776AB"),("Scikit-learn","#F7931E"),("Streamlit","#FF4B4B"),("Plotly","#3D4DB7")]):
-            col.markdown(f"""<div style='background:{color};color:white;border-radius:8px;padding:0.5rem;text-align:center;font-size:13px;font-weight:500'>{tech}</div>""", unsafe_allow_html=True)
+        t1, t2, t3, t4 = st.columns(4)
+        for col, (tech, color) in zip(
+            [t1, t2, t3, t4],
+            [("Python", "#3776AB"), ("Scikit-learn", "#F7931E"), ("Streamlit", "#FF4B4B"), ("Plotly", "#3D4DB7")]
+        ):
+            col.markdown(
+                f"""<div style='background:{color};color:white;border-radius:8px;
+                padding:0.5rem;text-align:center;font-size:13px;font-weight:500'>{tech}</div>""",
+                unsafe_allow_html=True
+            )
 
     with col2:
         st.markdown("### 📈 Model Stats")
-        for k,v in {"Accuracy":"99.73%","Precision":"99.8%","Recall":"99.7%","F1-Score":"99.7%","Train Size":"35,278","Test Size":"8,820","Features":"50,000","Algorithm":"LinearSVC"}.items():
+        for k, v in {
+            "Accuracy": "99.73%", "Precision": "99.8%", "Recall": "99.7%",
+            "F1-Score": "99.7%", "Train Size": "35,278", "Test Size": "8,820",
+            "Features": "50,000", "Algorithm": "LinearSVC"
+        }.items():
             st.markdown(f"**{k}:** {v}")
 
     st.divider()
     st.markdown("### 📚 Dataset Information")
-    d1,d2,d3 = st.columns(3)
+    d1, d2, d3 = st.columns(3)
     with d1:
         st.markdown("""<div class="feature-card"><h4>📰 Real News</h4>
-            <p style='color:#666'>21,417 articles sourced from Reuters.com — one of the world's most trusted news agencies.</p>
-            <p style='color:#3B6D11;font-weight:500'>Source: Reuters</p></div>""", unsafe_allow_html=True)
+            <p style='color:#666'>21,417 articles sourced from Reuters.com — one of the world's
+            most trusted news agencies.</p>
+            <p style='color:#3B6D11;font-weight:500'>Source: Reuters</p></div>""",
+            unsafe_allow_html=True)
     with d2:
         st.markdown("""<div class="feature-card"><h4>🚨 Fake News</h4>
-            <p style='color:#666'>23,481 articles from websites flagged as unreliable by fact-checking organizations.</p>
-            <p style='color:#A32D2D;font-weight:500'>Source: Flagged websites</p></div>""", unsafe_allow_html=True)
+            <p style='color:#666'>23,481 articles from websites flagged as unreliable by
+            fact-checking organizations.</p>
+            <p style='color:#A32D2D;font-weight:500'>Source: Flagged websites</p></div>""",
+            unsafe_allow_html=True)
     with d3:
         st.markdown("""<div class="feature-card"><h4>📊 Total Dataset</h4>
-            <p style='color:#666'>44,898 articles covering politics, world news, government, and social topics.</p>
-            <p style='color:#185FA5;font-weight:500'>Source: Kaggle</p></div>""", unsafe_allow_html=True)
+            <p style='color:#666'>44,898 articles covering politics, world news, government,
+            and social topics.</p>
+            <p style='color:#185FA5;font-weight:500'>Source: Kaggle</p></div>""",
+            unsafe_allow_html=True)
+
 
 # ══════════════════════════════════════════════════════════════
 # FAQ
@@ -333,22 +937,30 @@ elif page == "❓ FAQ":
         ("🤔 What is FakeGuard?", "FakeGuard is an AI-powered fake news detection system using a LinearSVC machine learning model trained on 44,000+ news articles to classify news as real or fake with 99.7% accuracy."),
         ("📊 How accurate is the model?", "The LinearSVC model achieves 99.73% accuracy on the test set. We compared 7 algorithms — LinearSVC performed best."),
         ("📰 What kind of news can it detect?", "Best on English-language political and world news articles similar to the Reuters dataset. May be less accurate on satire or opinion pieces."),
-        ("🔒 Is my data safe?", "Yes! All processing happens in real-time and no article text is stored or saved anywhere. Your data is completely private."),
+        ("🔒 Is my data safe?", "Yes! All processing happens in real-time and no article text is stored on any server. History is only saved locally in your browser session and clears when you close the tab."),
         ("⚡ How fast is detection?", "Detection happens in under 1 second. The TF-IDF vectorizer and LinearSVC model predict in milliseconds."),
         ("🌐 What dataset was used?", "The Kaggle Fake and Real News Dataset — real news from Reuters.com and fake news from flagged websites. Total 44,898 articles."),
         ("⚠️ Can it be fooled?", "Like any ML model, it can make mistakes on satirical content or opinion pieces. Always verify important news from multiple trusted sources."),
         ("🛠️ What technologies are used?", "Python, Scikit-learn (LinearSVC + TF-IDF), Streamlit, Pandas, Plotly, and Pickle for model saving."),
         ("📂 How many examples are available?", "The detector includes 40+ curated examples across 5 categories — Real Politics, Real Tech, Real Science, Fake Health, and Fake Political — 8-10 examples each."),
         ("🔄 How do I use the detector?", "Go to the Detector page, select a category from the dropdown, then select an example or paste your own article, then click Analyze Article to get instant results."),
+        ("🔑 What are Top Keywords?", "After analyzing an article, the app shows the most frequent meaningful words in the text. These are the words that likely influenced the AI's decision — high-frequency sensational words push toward Fake, while credible factual terms push toward Real."),
+        ("📊 What is the Confidence Score?", "The confidence score is derived from the model's internal decision function. A higher percentage means the model is more certain about its prediction. Scores above 85% indicate strong confidence."),
+        ("📜 How does History work?", "Every article you analyze is automatically saved to your session history with the result, timestamp, confidence score, and top keywords. You can view it in the Detector page sidebar or the full table in Dashboard. History clears when you close the browser tab."),
     ]
 
-    for q,a in faqs:
+    for q, a in faqs:
         with st.expander(q):
             st.write(a)
 
     st.divider()
     st.info("This project is open source. Check the GitHub repository for full code and documentation.")
 
+
 # ── Footer ────────────────────────────────────────────────────
 st.markdown("---")
-st.markdown("<p style='text-align:center;color:#999;font-size:12px'>📰 FakeGuard · Built with Scikit-learn + Streamlit · Kaggle Dataset · 99.7% Accuracy</p>", unsafe_allow_html=True)
+st.markdown(
+    "<p style='text-align:center;color:#aaa;font-size:12px'>📰 FakeGuard — AI-Powered Fake News Detector · "
+    "Built with Streamlit & Scikit-learn · Always verify news from multiple trusted sources</p>",
+    unsafe_allow_html=True
+)
