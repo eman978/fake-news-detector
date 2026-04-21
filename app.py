@@ -141,292 +141,910 @@ def get_ai_explanation(text, prediction):
         reasons.append("Follows standard news reporting structure")
         return reasons
 
-# ── Styling ───────────────────────────────────────────────────
+
+# ══════════════════════════════════════════════════════════════
+# GLOBAL CSS — Premium redesign
+# ══════════════════════════════════════════════════════════════
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
+/* ── Google Fonts ── */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap');
 
-/* ── Sidebar ── */
+/* ── CSS Variables ── */
+:root {
+    --primary:       #1A56CC;
+    --primary-dark:  #1240A0;
+    --primary-light: #E8F0FB;
+    --accent:        #3B82F6;
+    --real-green:    #16A34A;
+    --real-bg:       #F0FDF4;
+    --real-border:   #86EFAC;
+    --fake-red:      #DC2626;
+    --fake-bg:       #FEF2F2;
+    --fake-border:   #FCA5A5;
+    --surface:       #FFFFFF;
+    --bg:            #F7F9FC;
+    --border:        #E2E8F0;
+    --text-primary:  #0F172A;
+    --text-secondary:#475569;
+    --text-muted:    #94A3B8;
+    --shadow-sm:     0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md:     0 4px 16px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+    --shadow-lg:     0 10px 40px rgba(0,0,0,0.10), 0 4px 12px rgba(0,0,0,0.05);
+    --radius-sm:     8px;
+    --radius-md:     14px;
+    --radius-lg:     20px;
+    --radius-xl:     28px;
+    --transition:    all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Base ── */
+html, body, [class*="css"] {
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text-primary);
+}
+
+/* ── Remove Streamlit default padding ── */
+.block-container {
+    padding-top: 2rem !important;
+    padding-bottom: 3rem !important;
+    max-width: 1280px !important;
+}
+
+/* ── Main background ── */
+.stApp {
+    background: var(--bg) !important;
+}
+
+/* ══════════════════════════════
+   SIDEBAR
+══════════════════════════════ */
 section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #0C447C 0%, #0A3A6B 100%) !important;
+    background: #0B1D3A !important;
+    border-right: 1px solid rgba(255,255,255,0.06) !important;
 }
-section[data-testid="stSidebar"] * { color: white !important; }
+section[data-testid="stSidebar"] * {
+    color: white !important;
+}
+section[data-testid="stSidebar"] > div {
+    padding-top: 0 !important;
+}
 
-/* Hide default radio button icons/emojis */
-div[data-testid="stSidebar"] .stRadio label {
-    font-size: 14px !important;
-    font-weight: 500 !important;
+/* Nav items */
+div[data-testid="stSidebar"] .stRadio > label {
+    display: none !important;
+}
+div[data-testid="stSidebar"] .stRadio > div {
+    gap: 2px !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+div[data-testid="stSidebar"] .stRadio [data-baseweb="radio"] {
+    background: transparent !important;
+    border-radius: var(--radius-sm) !important;
     padding: 10px 14px !important;
-    border-radius: 8px !important;
-    margin-bottom: 4px !important;
-    transition: background 0.2s !important;
-    display: block !important;
+    margin: 1px 0 !important;
+    transition: var(--transition) !important;
+    cursor: pointer !important;
 }
-div[data-testid="stSidebar"] .stRadio label:hover {
-    background: rgba(255,255,255,0.12) !important;
+div[data-testid="stSidebar"] .stRadio [data-baseweb="radio"]:hover {
+    background: rgba(255,255,255,0.08) !important;
 }
-div[data-testid="stSidebar"] .stRadio [data-testid="stMarkdownContainer"] p {
-    font-size: 14px !important;
-}
-
-/* Hide radio circles */
 div[data-testid="stSidebar"] .stRadio [data-baseweb="radio"] > div:first-child {
     display: none !important;
 }
-
-/* ── Cards ── */
-.stat-card {
-    background: white;
-    border: 1px solid #e8ecf4;
-    border-radius: 14px;
-    padding: 1.4rem 1rem;
-    text-align: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    transition: transform 0.2s;
+div[data-testid="stSidebar"] .stRadio [aria-checked="true"][data-baseweb="radio"] {
+    background: rgba(59,130,246,0.25) !important;
+    border-left: 3px solid var(--accent) !important;
 }
-.stat-card:hover { transform: translateY(-2px); }
-.stat-num { font-size: 2rem; font-weight: 700; color: #185FA5; margin: 0; }
-.stat-lbl { font-size: 12px; color: #888; margin: 4px 0 0; }
-
-.feature-card {
-    background: white;
-    border: 1px solid #e8ecf4;
-    border-radius: 14px;
-    padding: 1.4rem;
-    height: 100%;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-}
-.feature-icon { font-size: 1.8rem; margin-bottom: 8px; }
-.feature-title { font-size: 15px; font-weight: 600; color: #1A1A1A; margin-bottom: 6px; }
-.feature-desc { font-size: 13px; color: #666; line-height: 1.6; }
-
-.step-card {
-    background: linear-gradient(135deg, #F0F7FF, #E8F0FE);
-    border: 1px solid #C8DCEF;
-    border-radius: 14px;
-    padding: 1.4rem 1rem;
-    text-align: center;
-}
-.step-num {
-    background: #185FA5;
-    color: white;
-    width: 32px; height: 32px;
-    border-radius: 50%;
-    font-size: 14px; font-weight: 700;
-    display: flex; align-items: center; justify-content: center;
-    margin: 0 auto 10px;
+div[data-testid="stSidebar"] .stRadio [data-testid="stMarkdownContainer"] p {
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.01em !important;
+    margin: 0 !important;
 }
 
-/* ── Results ── */
-.result-real {
-    background: linear-gradient(135deg, #F0FBF0, #E4F5E4);
-    border: 2px solid #4CAF50;
-    border-radius: 14px;
-    padding: 1.5rem;
-    margin-top: 0.5rem;
-}
-.result-fake {
-    background: linear-gradient(135deg, #FFF5F5, #FFE8E8);
-    border: 2px solid #E53935;
-    border-radius: 14px;
-    padding: 1.5rem;
-    margin-top: 0.5rem;
-}
-
-/* ── Keywords ── */
-.keyword-real {
-    background: #E8F5E9; color: #2E7D32;
-    padding: 5px 12px; border-radius: 20px;
-    font-size: 13px; font-weight: 500;
-    margin: 3px; display: inline-block;
-    border: 1px solid #A5D6A7;
-}
-.keyword-fake {
-    background: #FFEBEE; color: #C62828;
-    padding: 5px 12px; border-radius: 20px;
-    font-size: 13px; font-weight: 500;
-    margin: 3px; display: inline-block;
-    border: 1px solid #EF9A9A;
-}
-
-/* ── Analyze button ── */
+/* ══════════════════════════════
+   GLOBAL BUTTONS
+══════════════════════════════ */
 div[data-testid="stButton"] > button {
-    background: linear-gradient(135deg, #185FA5, #0C447C) !important;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%) !important;
     color: white !important;
     border: none !important;
-    border-radius: 10px !important;
-    padding: 0.75rem 2rem !important;
-    font-size: 15px !important;
+    border-radius: var(--radius-md) !important;
+    padding: 0.72rem 1.8rem !important;
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 14px !important;
     font-weight: 600 !important;
-    transition: all 0.2s !important;
-    box-shadow: 0 4px 12px rgba(24,95,165,0.3) !important;
+    letter-spacing: 0.02em !important;
+    transition: var(--transition) !important;
+    box-shadow: 0 4px 14px rgba(26,86,204,0.30) !important;
+    cursor: pointer !important;
 }
 div[data-testid="stButton"] > button:hover {
-    transform: translateY(-1px) !important;
-    box-shadow: 0 6px 16px rgba(24,95,165,0.4) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 24px rgba(26,86,204,0.40) !important;
+    background: linear-gradient(135deg, #2563EB 0%, var(--primary) 100%) !important;
+}
+div[data-testid="stButton"] > button:active {
+    transform: translateY(0) !important;
 }
 
-/* ── Input fields ── */
+/* ── Danger button (Clear History) ── */
+div[data-testid="stButton"] > button[kind="secondary"] {
+    background: transparent !important;
+    border: 1.5px solid #E2E8F0 !important;
+    color: var(--text-secondary) !important;
+    box-shadow: none !important;
+}
+div[data-testid="stButton"] > button[kind="secondary"]:hover {
+    border-color: var(--fake-red) !important;
+    color: var(--fake-red) !important;
+    background: var(--fake-bg) !important;
+    box-shadow: none !important;
+}
+
+/* ══════════════════════════════
+   INPUTS
+══════════════════════════════ */
 div[data-testid="stTextInput"] input,
 div[data-testid="stTextArea"] textarea {
-    border-radius: 10px !important;
-    border: 1.5px solid #D0D9E8 !important;
+    border-radius: var(--radius-sm) !important;
+    border: 1.5px solid var(--border) !important;
+    background: var(--surface) !important;
+    font-family: 'DM Sans', sans-serif !important;
     font-size: 14px !important;
-    transition: border 0.2s !important;
+    color: var(--text-primary) !important;
+    transition: var(--transition) !important;
+    padding: 0.65rem 0.9rem !important;
 }
 div[data-testid="stTextInput"] input:focus,
 div[data-testid="stTextArea"] textarea:focus {
-    border-color: #185FA5 !important;
-    box-shadow: 0 0 0 3px rgba(24,95,165,0.1) !important;
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px rgba(26,86,204,0.12) !important;
+    outline: none !important;
+}
+div[data-testid="stTextInput"] input::placeholder,
+div[data-testid="stTextArea"] textarea::placeholder {
+    color: var(--text-muted) !important;
 }
 
-/* ── Select boxes ── */
-div[data-testid="stSelectbox"] > div {
-    border-radius: 10px !important;
-    border: 1.5px solid #D0D9E8 !important;
+/* ── Selectbox ── */
+div[data-testid="stSelectbox"] > div > div {
+    border-radius: var(--radius-sm) !important;
+    border: 1.5px solid var(--border) !important;
+    background: var(--surface) !important;
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 14px !important;
+    transition: var(--transition) !important;
+}
+div[data-testid="stSelectbox"] > div > div:hover {
+    border-color: var(--primary) !important;
 }
 
-/* ── Empty result box ── */
-.empty-result {
-    background: #F8FAFF;
-    border: 2px dashed #C8D8EC;
-    border-radius: 14px;
-    padding: 3rem 2rem;
+/* ── Labels ── */
+div[data-testid="stTextInput"] label,
+div[data-testid="stTextArea"] label,
+div[data-testid="stSelectbox"] label {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: var(--text-secondary) !important;
+    letter-spacing: 0.04em !important;
+    text-transform: uppercase !important;
+    margin-bottom: 4px !important;
+}
+
+/* ── Metrics ── */
+div[data-testid="stMetric"] {
+    background: var(--surface) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-md) !important;
+    padding: 1.1rem 1.2rem !important;
+    box-shadow: var(--shadow-sm) !important;
+    transition: var(--transition) !important;
+}
+div[data-testid="stMetric"]:hover {
+    box-shadow: var(--shadow-md) !important;
+    transform: translateY(-1px) !important;
+}
+div[data-testid="stMetric"] label {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: var(--text-muted) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+}
+div[data-testid="stMetricValue"] {
+    font-size: 1.8rem !important;
+    font-weight: 700 !important;
+    color: var(--primary) !important;
+}
+div[data-testid="stMetricDelta"] {
+    font-size: 12px !important;
+}
+
+/* ── Expander ── */
+div[data-testid="stExpander"] {
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-md) !important;
+    background: var(--surface) !important;
+    margin-bottom: 10px !important;
+    box-shadow: var(--shadow-sm) !important;
+    overflow: hidden !important;
+    transition: var(--transition) !important;
+}
+div[data-testid="stExpander"]:hover {
+    border-color: #CBD5E1 !important;
+    box-shadow: var(--shadow-md) !important;
+}
+div[data-testid="stExpander"] summary {
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    color: var(--text-primary) !important;
+    padding: 1rem 1.2rem !important;
+}
+
+/* ── Alert / Info ── */
+div[data-testid="stAlert"] {
+    border-radius: var(--radius-md) !important;
+    border: 1px solid !important;
+    font-size: 14px !important;
+}
+
+/* ── Dataframe ── */
+div[data-testid="stDataFrame"] {
+    border-radius: var(--radius-md) !important;
+    overflow: hidden !important;
+    border: 1px solid var(--border) !important;
+}
+
+/* ── Divider ── */
+hr {
+    border: none !important;
+    border-top: 1px solid var(--border) !important;
+    margin: 1.5rem 0 !important;
+}
+
+/* ── Spinner ── */
+div[data-testid="stSpinner"] {
+    color: var(--primary) !important;
+}
+
+/* ══════════════════════════════
+   REUSABLE COMPONENT CLASSES
+══════════════════════════════ */
+
+/* Stat Card */
+.stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1.4rem 1rem 1.2rem;
     text-align: center;
-    margin-top: 0.5rem;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: #CBD5E1;
+}
+.stat-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2.2rem;
+    font-weight: 400;
+    color: var(--primary);
+    margin: 0;
+    line-height: 1;
+}
+.stat-lbl {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin: 8px 0 0;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+/* Feature Card */
+.feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1.5rem 1.3rem;
+    height: 100%;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+.feature-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: #CBD5E1;
+}
+.feature-icon {
+    font-size: 1.7rem;
+    margin-bottom: 10px;
+    display: block;
+}
+.feature-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 7px;
+}
+.feature-desc {
+    font-size: 13.5px;
+    color: var(--text-secondary);
+    line-height: 1.65;
+}
+
+/* Step Card */
+.step-card {
+    background: linear-gradient(145deg, #EEF5FF, #E3EDFF);
+    border: 1px solid #C3D9FF;
+    border-radius: var(--radius-md);
+    padding: 1.4rem 1rem;
+    text-align: center;
+    transition: var(--transition);
+}
+.step-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+.step-num {
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: white;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    box-shadow: 0 4px 10px rgba(26,86,204,0.30);
+}
+.step-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 7px;
+}
+.step-desc {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    line-height: 1.55;
+}
+
+/* Result Cards */
+.result-real {
+    background: var(--real-bg);
+    border: 1.5px solid var(--real-border);
+    border-radius: var(--radius-md);
+    padding: 1.5rem 1.5rem 1.3rem;
+    margin-top: 0.25rem;
+    position: relative;
+    overflow: hidden;
+    animation: slideIn 0.3s ease-out;
+}
+.result-fake {
+    background: var(--fake-bg);
+    border: 1.5px solid var(--fake-border);
+    border-radius: var(--radius-md);
+    padding: 1.5rem 1.5rem 1.3rem;
+    margin-top: 0.25rem;
+    position: relative;
+    overflow: hidden;
+    animation: slideIn 0.3s ease-out;
+}
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.result-badge-real {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--real-green);
+    color: white;
+    font-size: 11px; font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+.result-badge-fake {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--fake-red);
+    color: white;
+    font-size: 11px; font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+/* Keyword Pills */
+.keyword-real {
+    background: #DCFCE7;
+    color: #166534;
+    padding: 4px 13px;
+    border-radius: 20px;
+    font-size: 12.5px;
+    font-weight: 600;
+    margin: 3px;
+    display: inline-block;
+    border: 1px solid #86EFAC;
+    transition: var(--transition);
+}
+.keyword-real:hover {
+    background: #BBF7D0;
+}
+.keyword-fake {
+    background: #FEE2E2;
+    color: #991B1B;
+    padding: 4px 13px;
+    border-radius: 20px;
+    font-size: 12.5px;
+    font-weight: 600;
+    margin: 3px;
+    display: inline-block;
+    border: 1px solid #FCA5A5;
+    transition: var(--transition);
+}
+.keyword-fake:hover {
+    background: #FECACA;
+}
+
+/* History items */
+.history-item-real {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--real-green);
+    border-radius: var(--radius-md);
+    padding: 1.1rem 1.3rem;
+    margin-bottom: 0.6rem;
+    transition: var(--transition);
+    box-shadow: var(--shadow-sm);
+}
+.history-item-fake {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--fake-red);
+    border-radius: var(--radius-md);
+    padding: 1.1rem 1.3rem;
+    margin-bottom: 0.6rem;
+    transition: var(--transition);
+    box-shadow: var(--shadow-sm);
+}
+.history-item-real:hover,
+.history-item-fake:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateX(2px);
+}
+
+/* Empty State */
+.empty-state {
+    background: var(--surface);
+    border: 2px dashed #CBD5E1;
+    border-radius: var(--radius-lg);
+    padding: 3.5rem 2rem;
+    text-align: center;
+    margin-top: 0.25rem;
+    animation: fadeIn 0.3s ease-out;
+}
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+.empty-icon {
+    font-size: 2.8rem;
+    margin-bottom: 12px;
+    display: block;
+    opacity: 0.6;
+}
+.empty-title {
+    color: #64748B;
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+.empty-subtitle {
+    color: #94A3B8;
+    font-size: 13.5px;
+}
+
+/* Section heading helper */
+.section-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 6px;
+    display: block;
+}
+
+/* Info badge inline */
+.info-badge {
+    display: inline-block;
+    background: var(--primary-light);
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+
+/* Dataset info cards */
+.dataset-card {
+    border-radius: var(--radius-md);
+    padding: 1.4rem;
+    border: 1px solid;
+    transition: var(--transition);
+}
+.dataset-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Tech badge */
+.tech-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    padding: 0.55rem 0.8rem;
+    font-size: 13px;
+    font-weight: 700;
+    color: white;
+    transition: var(--transition);
+}
+.tech-badge:hover {
+    transform: scale(1.04);
+}
+
+/* Stats row in About */
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13.5px;
+}
+.stat-row:last-child { border-bottom: none; }
+.stat-key { color: var(--text-secondary); }
+.stat-val { color: var(--primary); font-weight: 700; }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+
+/* ── Responsive columns ── */
+@media (max-width: 768px) {
+    .block-container { padding: 1rem !important; }
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ── Sidebar ───────────────────────────────────────────────────
+
+# ══════════════════════════════════════════════════════════════
+# SIDEBAR
+# ══════════════════════════════════════════════════════════════
 with st.sidebar:
     st.markdown("""
-    <div style='text-align:center;padding:1rem 0 0.5rem'>
-        <div style='font-size:2rem;margin-bottom:4px'>📰</div>
-        <div style='font-size:20px;font-weight:700;color:white'>FakeGuard</div>
-        <div style='font-size:12px;color:#ADC8E6;margin-top:3px'>AI News Detector</div>
+    <div style='
+        background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(26,86,204,0.08));
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        text-align: center;
+        padding: 2rem 1rem 1.5rem;
+        margin: 0 -1rem 0.5rem;
+    '>
+        <div style='
+            width: 52px; height: 52px;
+            background: linear-gradient(135deg, #3B82F6, #1A56CC);
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem;
+            margin: 0 auto 10px;
+            box-shadow: 0 6px 16px rgba(59,130,246,0.35);
+        '>📰</div>
+        <div style='font-size: 20px; font-weight: 700; color: white; letter-spacing: -0.01em;'>FakeGuard</div>
+        <div style='font-size: 11.5px; color: #94A3B8; margin-top: 3px; letter-spacing: 0.04em; text-transform: uppercase;'>AI News Detector</div>
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("<hr style='border:none;border-top:1px solid rgba(255,255,255,0.15);margin:12px 0'>", unsafe_allow_html=True)
-
+    st.markdown("<div style='padding: 0 0.25rem;'>", unsafe_allow_html=True)
     page = st.radio("", [
-        "Home",
-        "Detector",
-        "Dashboard",
-        "History",
-        "About",
-        "FAQ"
+        "🏠  Home",
+        "🔍  Detector",
+        "📊  Dashboard",
+        "🕒  History",
+        "ℹ️  About",
+        "❓  FAQ"
     ], label_visibility="collapsed")
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("<hr style='border:none;border-top:1px solid rgba(255,255,255,0.15);margin:12px 0'>", unsafe_allow_html=True)
+    # Strip icon prefix for logic
+    page = page.split("  ", 1)[1] if "  " in page else page
+
+    st.markdown("<hr style='border:none;border-top:1px solid rgba(255,255,255,0.08);margin:1rem 0'>", unsafe_allow_html=True)
+
+    checked_count = len(st.session_state.history)
+    real_count_sb = sum(1 for h in st.session_state.history if h["prediction_raw"] == 1)
+    fake_count_sb = checked_count - real_count_sb
 
     st.markdown(f"""
-    <div style='text-align:center;padding:0.5rem 0'>
-        <div style='font-size:11px;color:#ADC8E6;margin-bottom:4px'>Model Accuracy</div>
-        <div style='font-size:26px;font-weight:700;color:white'>99.7%</div>
-        <div style='font-size:11px;color:#ADC8E6;margin-top:2px'>LinearSVC Algorithm</div>
-    </div>
-    <div style='text-align:center;padding:0.4rem 0'>
-        <div style='font-size:11px;color:#ADC8E6'>Articles Checked</div>
-        <div style='font-size:20px;font-weight:700;color:white'>{len(st.session_state.history)}</div>
+    <div style='padding: 0 0.4rem;'>
+        <div style='
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+        '>
+            <div style='text-align: center; margin-bottom: 0.8rem;'>
+                <div style='font-size: 11px; color: #64748B; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px;'>Model Accuracy</div>
+                <div style='font-size: 28px; font-weight: 700; color: white; line-height: 1;'>99.7%</div>
+                <div style='font-size: 10.5px; color: #64748B; margin-top: 2px;'>LinearSVC Algorithm</div>
+            </div>
+            <div style='display: flex; justify-content: space-between; padding-top: 0.7rem; border-top: 1px solid rgba(255,255,255,0.07);'>
+                <div style='text-align: center; flex: 1;'>
+                    <div style='font-size: 18px; font-weight: 700; color: #4ADE80;'>{real_count_sb}</div>
+                    <div style='font-size: 10px; color: #64748B;'>Real</div>
+                </div>
+                <div style='width: 1px; background: rgba(255,255,255,0.07);'></div>
+                <div style='text-align: center; flex: 1;'>
+                    <div style='font-size: 18px; font-weight: 700; color: #F87171;'>{fake_count_sb}</div>
+                    <div style='font-size: 10px; color: #64748B;'>Fake</div>
+                </div>
+                <div style='width: 1px; background: rgba(255,255,255,0.07);'></div>
+                <div style='text-align: center; flex: 1;'>
+                    <div style='font-size: 18px; font-weight: 700; color: white;'>{checked_count}</div>
+                    <div style='font-size: 10px; color: #64748B;'>Total</div>
+                </div>
+            </div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
+
 
 # ══════════════════════════════════════════════════════════════
 # HOME
 # ══════════════════════════════════════════════════════════════
 if page == "Home":
+    # Hero Banner
     st.markdown("""
-    <div style='background:linear-gradient(135deg,#185FA5 0%,#0C447C 100%);color:white;
-        padding:3.5rem 2.5rem;border-radius:20px;text-align:center;margin-bottom:2rem;
-        box-shadow:0 8px 32px rgba(12,68,124,0.25)'>
-        <div style='font-size:3rem;margin-bottom:8px'>📰</div>
-        <h1 style='font-size:2.8rem;font-weight:700;margin:0 0 8px'>FakeGuard</h1>
-        <p style='font-size:1.15rem;opacity:0.9;margin:0 0 6px'>AI-Powered Fake News Detection System</p>
-        <p style='font-size:0.95rem;opacity:0.65;margin:0'>Trained on 44,000+ articles &nbsp;·&nbsp; 99.7% Accuracy &nbsp;·&nbsp; LinearSVC Model</p>
-    </div>""", unsafe_allow_html=True)
+    <div style='
+        background: linear-gradient(135deg, #1240A0 0%, #1A56CC 45%, #2563EB 100%);
+        color: white;
+        padding: 4rem 3rem;
+        border-radius: var(--radius-xl);
+        text-align: center;
+        margin-bottom: 2.5rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(18,64,160,0.35);
+    '>
+        <div style='
+            position: absolute; top: -60px; right: -60px;
+            width: 200px; height: 200px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 50%;
+        '></div>
+        <div style='
+            position: absolute; bottom: -80px; left: -40px;
+            width: 240px; height: 240px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 50%;
+        '></div>
+        <div style='
+            display: inline-flex; align-items: center; gap: 8px;
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 20px;
+            padding: 5px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        '>
+            ✦ AI-Powered Detection System
+        </div>
+        <h1 style='
+            font-family: "DM Serif Display", serif;
+            font-size: 3.5rem;
+            font-weight: 400;
+            margin: 0 0 12px;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+        '>FakeGuard</h1>
+        <p style='font-size: 1.1rem; opacity: 0.82; margin: 0 0 8px; font-weight: 400;'>
+            Detect misinformation with 99.7% accuracy
+        </p>
+        <p style='font-size: 0.9rem; opacity: 0.5; margin: 0;'>
+            Trained on 44,000+ articles &nbsp;·&nbsp; 7 algorithms compared &nbsp;·&nbsp; LinearSVC model
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
-    c1,c2,c3,c4 = st.columns(4)
-    stats = [("99.7%","Model Accuracy"),("44K+","Articles Trained"),("7","Algorithms Compared"),("<1s","Detection Speed")]
-    for col,(num,lbl) in zip([c1,c2,c3,c4],stats):
+    # Stats row
+    c1, c2, c3, c4 = st.columns(4)
+    stats = [
+        ("99.7%", "Model Accuracy"),
+        ("44K+",  "Articles Trained"),
+        ("7",     "Algorithms Tested"),
+        ("<1s",   "Detection Speed"),
+    ]
+    for col, (num, lbl) in zip([c1, c2, c3, c4], stats):
         with col:
-            st.markdown(f"""<div class="stat-card">
+            st.markdown(f"""
+            <div class="stat-card">
                 <div class="stat-num">{num}</div>
                 <div class="stat-lbl">{lbl}</div>
             </div>""", unsafe_allow_html=True)
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("### ✨ Key Features")
-    f1,f2,f3,f4 = st.columns(4)
+    st.markdown("<div style='height:2rem'></div>", unsafe_allow_html=True)
+
+    # Features
+    st.markdown("""
+    <div style='display:flex;align-items:center;gap:10px;margin-bottom:1.1rem'>
+        <span style='font-size:1.1rem;font-weight:700;color:var(--text-primary)'>Key Features</span>
+        <span style='flex:1;height:1px;background:var(--border)'></span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    f1, f2, f3, f4 = st.columns(4)
     features = [
-        ("🤖","AI Detection","Advanced LinearSVC model trained on 44,000+ real and fake articles with 99.7% accuracy."),
-        ("🔑","Top Keywords","After analysis, see exactly which words most influenced the prediction decision."),
-        ("📊","Confidence Score","Visual probability bar showing how confident the model is in its result."),
-        ("🕒","History Tracking","Every article you analyze is automatically saved with timestamps and keywords."),
+        ("🤖", "AI Detection",      "Advanced LinearSVC model trained on 44K+ real and fake articles with 99.7% accuracy."),
+        ("🔑", "Key Signals",       "After analysis, see which words most influenced the prediction decision."),
+        ("📊", "Confidence Score",  "Visual probability bar showing how confident the model is in its verdict."),
+        ("🕒", "History Tracking",  "Every article you analyze is automatically saved with timestamps and keywords."),
     ]
-    for col,(icon,title,desc) in zip([f1,f2,f3,f4],features):
+    for col, (icon, title, desc) in zip([f1, f2, f3, f4], features):
         with col:
-            st.markdown(f"""<div class="feature-card">
-                <div class="feature-icon">{icon}</div>
+            st.markdown(f"""
+            <div class="feature-card">
+                <span class="feature-icon">{icon}</span>
                 <div class="feature-title">{title}</div>
                 <div class="feature-desc">{desc}</div>
             </div>""", unsafe_allow_html=True)
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("### 🔄 How It Works")
-    s1,s2,s3,s4 = st.columns(4)
-    steps = [("1","Input Text","Paste your article title and full text into the detector"),
-             ("2","Vectorize","TF-IDF converts text into 50,000 numerical features"),
-             ("3","Classify","LinearSVC model predicts Real or Fake instantly"),
-             ("4","Get Results","View prediction, confidence score, keywords and explanation")]
-    for col,(num,title,desc) in zip([s1,s2,s3,s4],steps):
+    st.markdown("<div style='height:2rem'></div>", unsafe_allow_html=True)
+
+    # How it works
+    st.markdown("""
+    <div style='display:flex;align-items:center;gap:10px;margin-bottom:1.1rem'>
+        <span style='font-size:1.1rem;font-weight:700;color:var(--text-primary)'>How It Works</span>
+        <span style='flex:1;height:1px;background:var(--border)'></span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    s1, s2, s3, s4 = st.columns(4)
+    steps = [
+        ("1", "Paste Article",  "Add your article title and full text into the detector"),
+        ("2", "Vectorize",      "TF-IDF converts text into 50,000 numerical features"),
+        ("3", "Classify",       "LinearSVC model predicts Real or Fake instantly"),
+        ("4", "Get Results",    "View prediction, confidence, keywords, and explanation"),
+    ]
+    for col, (num, title, desc) in zip([s1, s2, s3, s4], steps):
         with col:
-            st.markdown(f"""<div class="step-card">
+            st.markdown(f"""
+            <div class="step-card">
                 <div class="step-num">{num}</div>
-                <div style='font-size:14px;font-weight:600;color:#185FA5;margin-bottom:6px'>{title}</div>
-                <div style='font-size:12px;color:#555;line-height:1.5'>{desc}</div>
+                <div class="step-title">{title}</div>
+                <div class="step-desc">{desc}</div>
             </div>""", unsafe_allow_html=True)
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.info("Go to **Detector** in the sidebar to start analyzing news articles!")
+    st.markdown("<div style='height:1.5rem'></div>", unsafe_allow_html=True)
+    st.info("👉 Head to **Detector** in the sidebar to start analyzing news articles.")
+
 
 # ══════════════════════════════════════════════════════════════
 # DETECTOR
 # ══════════════════════════════════════════════════════════════
 elif page == "Detector":
-    st.markdown("## Fake News Detector")
-    st.markdown("Select a category and example, or paste your own article text below.")
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("""
+    <h2 style='font-size:1.7rem;font-weight:700;margin-bottom:4px;color:var(--text-primary)'>
+        Fake News Detector
+    </h2>
+    <p style='color:var(--text-secondary);font-size:14.5px;margin-bottom:1.5rem'>
+        Select an example from the library, or paste your own article text to analyze.
+    </p>
+    """, unsafe_allow_html=True)
 
-    col_left, col_right = st.columns([1,1], gap="large")
+    col_left, col_right = st.columns([1, 1], gap="large")
 
     with col_left:
-        st.markdown("#### Select an Example")
-        category = st.selectbox("Category", ["-- Choose category --"] + list(examples_db.keys()), label_visibility="collapsed")
+        st.markdown("""
+        <div style='
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+        '>
+        """, unsafe_allow_html=True)
+
+        st.markdown("<span class='section-label'>Example Library</span>", unsafe_allow_html=True)
+        category = st.selectbox(
+            "Category",
+            ["— Choose a category —"] + list(examples_db.keys()),
+            label_visibility="collapsed"
+        )
         title_default, text_default = "", ""
-        if category != "-- Choose category --":
+        if category != "— Choose a category —":
             example_list = examples_db[category]
-            example_titles = ["-- Choose example --"] + [e[0] for e in example_list]
+            example_titles = ["— Choose an example —"] + [e[0] for e in example_list]
             chosen = st.selectbox("Example", example_titles, label_visibility="collapsed")
-            if chosen != "-- Choose example --":
-                for t,txt in example_list:
+            if chosen != "— Choose an example —":
+                for t, txt in example_list:
                     if t == chosen:
                         title_default, text_default = t, txt
                         break
-        st.markdown("#### Article Input")
-        title_input = st.text_input("Article Title (optional)", value=title_default, placeholder="Enter article headline...")
-        news_input  = st.text_area("Article Text", value=text_default, height=210, placeholder="Paste the full news article content here...")
-        analyze = st.button("Analyze Article", use_container_width=True)
+
+        st.markdown("<div style='height:0.8rem'></div>", unsafe_allow_html=True)
+        st.markdown("<span class='section-label'>Article Input</span>", unsafe_allow_html=True)
+        title_input = st.text_input(
+            "Article Title",
+            value=title_default,
+            placeholder="Enter the article headline…",
+            label_visibility="collapsed"
+        )
+        st.markdown("<div style='height:0.3rem'></div>", unsafe_allow_html=True)
+        news_input = st.text_area(
+            "Article Body",
+            value=text_default,
+            height=200,
+            placeholder="Paste the full news article content here…",
+            label_visibility="collapsed"
+        )
+
+        # Word count indicator
+        wc = len(news_input.split()) if news_input.strip() else 0
+        wc_color = "#16A34A" if wc >= 30 else "#D97706" if wc > 0 else "#94A3B8"
+        st.markdown(f"""
+        <div style='display:flex;justify-content:flex-end;margin-top:4px;margin-bottom:12px'>
+            <span style='font-size:11.5px;color:{wc_color};font-weight:500'>{wc} words</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        analyze = st.button("🔍  Analyze Article", use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with col_right:
-        st.markdown("#### Analysis Result")
+        st.markdown("""
+        <div style='
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            min-height: 520px;
+        '>
+        """, unsafe_allow_html=True)
+
+        st.markdown("<span class='section-label'>Analysis Result</span>", unsafe_allow_html=True)
+
         if analyze:
             if not news_input.strip():
-                st.warning("Please enter some article text first.")
+                st.warning("⚠️ Please enter some article text before analyzing.")
             else:
-                with st.spinner("Analyzing..."):
+                with st.spinner("Analyzing article…"):
                     combined = title_input + " " + news_input
                     vec = vectorizer.transform([combined])
                     prediction = model.predict(vec)[0]
@@ -434,275 +1052,452 @@ elif page == "Detector":
                     keywords = get_top_keywords(combined, vectorizer, model, top_n=10)
                     reasons = get_ai_explanation(combined, prediction)
 
+                # ── Verdict ──
                 if prediction == 1:
-                    st.markdown("""<div class="result-real">
-                        <div style='font-size:1.6rem;margin-bottom:6px'>✅</div>
-                        <h3 style='color:#2E7D32;margin:0 0 6px'>REAL NEWS</h3>
-                        <p style='color:#388E3C;margin:0;font-size:14px'>This article contains patterns consistent with credible journalism.</p>
+                    st.markdown("""
+                    <div class="result-real">
+                        <span class="result-badge-real">✓ Verified</span>
+                        <h3 style='color:#15803D;margin:4px 0 6px;font-size:1.35rem;font-weight:700'>Real News</h3>
+                        <p style='color:#166534;margin:0;font-size:13.5px;line-height:1.55'>
+                            This article contains patterns consistent with credible journalism.
+                        </p>
                     </div>""", unsafe_allow_html=True)
                 else:
-                    st.markdown("""<div class="result-fake">
-                        <div style='font-size:1.6rem;margin-bottom:6px'>🚨</div>
-                        <h3 style='color:#C62828;margin:0 0 6px'>FAKE NEWS</h3>
-                        <p style='color:#D32F2F;margin:0;font-size:14px'>Misinformation patterns detected in this article.</p>
+                    st.markdown("""
+                    <div class="result-fake">
+                        <span class="result-badge-fake">⚠ Alert</span>
+                        <h3 style='color:#B91C1C;margin:4px 0 6px;font-size:1.35rem;font-weight:700'>Fake News</h3>
+                        <p style='color:#991B1B;margin:0;font-size:13.5px;line-height:1.55'>
+                            Misinformation patterns detected in this article.
+                        </p>
                     </div>""", unsafe_allow_html=True)
 
-                st.markdown("<br>", unsafe_allow_html=True)
+                st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
 
-                # Confidence Score
-                st.markdown("**Confidence Score**")
+                # ── Confidence Score ──
+                st.markdown("<span class='section-label'>Confidence Score</span>", unsafe_allow_html=True)
                 fig_prob = go.Figure()
-                fig_prob.add_trace(go.Bar(x=[real_prob*100], y=[""], orientation='h', name="Real",
-                    marker_color="#4CAF50", text=[f"Real: {real_prob*100:.1f}%"], textposition='inside',
-                    textfont=dict(color='white', size=13)))
-                fig_prob.add_trace(go.Bar(x=[fake_prob*100], y=[""], orientation='h', name="Fake",
-                    marker_color="#E53935", text=[f"Fake: {fake_prob*100:.1f}%"], textposition='inside',
-                    textfont=dict(color='white', size=13)))
+                fig_prob.add_trace(go.Bar(
+                    x=[real_prob * 100], y=[""],
+                    orientation='h', name="Real",
+                    marker_color="#16A34A",
+                    text=[f"Real  {real_prob*100:.1f}%"],
+                    textposition='inside',
+                    textfont=dict(color='white', size=12.5, family='DM Sans'),
+                    marker=dict(line=dict(width=0))
+                ))
+                fig_prob.add_trace(go.Bar(
+                    x=[fake_prob * 100], y=[""],
+                    orientation='h', name="Fake",
+                    marker_color="#DC2626",
+                    text=[f"Fake  {fake_prob*100:.1f}%"],
+                    textposition='inside',
+                    textfont=dict(color='white', size=12.5, family='DM Sans'),
+                    marker=dict(line=dict(width=0))
+                ))
                 fig_prob.update_layout(
-                    barmode='stack', height=70,
-                    margin=dict(l=0,r=0,t=0,b=0),
+                    barmode='stack', height=56,
+                    margin=dict(l=0, r=0, t=0, b=0),
                     showlegend=False,
-                    xaxis=dict(range=[0,100], showticklabels=False, showgrid=False),
-                    yaxis=dict(showticklabels=False),
+                    xaxis=dict(range=[0, 100], showticklabels=False, showgrid=False, zeroline=False),
+                    yaxis=dict(showticklabels=False, showgrid=False),
                     plot_bgcolor='rgba(0,0,0,0)',
                     paper_bgcolor='rgba(0,0,0,0)',
                 )
-                st.plotly_chart(fig_prob, use_container_width=True)
+                st.plotly_chart(fig_prob, use_container_width=True, config={"displayModeBar": False})
+
                 rc, fc = st.columns(2)
-                rc.markdown(f"<div style='text-align:center;color:#2E7D32;font-weight:600'>Real: {real_prob*100:.1f}%</div>", unsafe_allow_html=True)
-                fc.markdown(f"<div style='text-align:center;color:#C62828;font-weight:600'>Fake: {fake_prob*100:.1f}%</div>", unsafe_allow_html=True)
+                rc.markdown(f"<div style='text-align:center;color:#15803D;font-size:13px;font-weight:700;margin-top:-6px'>Real: {real_prob*100:.1f}%</div>", unsafe_allow_html=True)
+                fc.markdown(f"<div style='text-align:center;color:#B91C1C;font-size:13px;font-weight:700;margin-top:-6px'>Fake: {fake_prob*100:.1f}%</div>", unsafe_allow_html=True)
 
-                # Keywords
-                st.markdown("<br>**Top Influential Keywords**", unsafe_allow_html=True)
+                st.markdown("<div style='height:0.8rem'></div>", unsafe_allow_html=True)
+
+                # ── Keywords ──
+                st.markdown("<span class='section-label'>Top Influential Keywords</span>", unsafe_allow_html=True)
                 kw_class = "keyword-fake" if prediction == 0 else "keyword-real"
-                kw_html = "".join([f'<span class="{kw_class}">{w}</span> ' for w,_ in keywords])
-                st.markdown(kw_html, unsafe_allow_html=True)
+                kw_html = "".join([f'<span class="{kw_class}">{w}</span>' for w, _ in keywords])
+                st.markdown(f"<div style='margin-top:4px;line-height:2.2'>{kw_html}</div>", unsafe_allow_html=True)
 
-                # AI Explanation
-                st.markdown("<br>**AI Explanation**", unsafe_allow_html=True)
-                for r in reasons:
-                    icon = "⚠️" if prediction == 0 else "✔️"
-                    st.markdown(f"{icon} {r}")
+                st.markdown("<div style='height:0.8rem'></div>", unsafe_allow_html=True)
 
-                # Save History
+                # ── AI Explanation ──
+                st.markdown("<span class='section-label'>Why this verdict?</span>", unsafe_allow_html=True)
+                icon = "⚠️" if prediction == 0 else "✔️"
+                exp_color = "#7F1D1D" if prediction == 0 else "#14532D"
+                exp_bg = "#FEF2F2" if prediction == 0 else "#F0FDF4"
+                exp_border = "#FECACA" if prediction == 0 else "#BBF7D0"
+                reasons_html = "".join([
+                    f"<div style='display:flex;gap:8px;align-items:flex-start;margin-bottom:6px'>"
+                    f"<span style='font-size:13px;flex-shrink:0;margin-top:1px'>{icon}</span>"
+                    f"<span style='font-size:13px;color:{exp_color};line-height:1.5'>{r}</span>"
+                    f"</div>"
+                    for r in reasons
+                ])
+                st.markdown(f"""
+                <div style='background:{exp_bg};border:1px solid {exp_border};border-radius:10px;padding:0.9rem 1rem;margin-top:4px'>
+                    {reasons_html}
+                </div>
+                """, unsafe_allow_html=True)
+
+                # Save to history
                 st.session_state.history.append({
-                    "time": datetime.now().strftime("%I:%M %p"),
-                    "date": datetime.now().strftime("%d %b %Y"),
-                    "title": title_input if title_input else news_input[:65]+"...",
-                    "prediction": "REAL" if prediction==1 else "FAKE",
-                    "real_prob": round(real_prob*100, 1),
-                    "fake_prob": round(fake_prob*100, 1),
-                    "keywords": [w for w,_ in keywords[:5]],
+                    "time":           datetime.now().strftime("%I:%M %p"),
+                    "date":           datetime.now().strftime("%d %b %Y"),
+                    "title":          title_input if title_input else news_input[:65] + "…",
+                    "prediction":     "REAL" if prediction == 1 else "FAKE",
+                    "real_prob":      round(real_prob * 100, 1),
+                    "fake_prob":      round(fake_prob * 100, 1),
+                    "keywords":       [w for w, _ in keywords[:5]],
                     "prediction_raw": prediction
                 })
-                st.success("Saved to History!")
+                st.success("✅ Analysis saved to History.")
         else:
-            st.markdown("""<div class="empty-result">
-                <div style='font-size:2.5rem;margin-bottom:10px'>🔍</div>
-                <div style='color:#8CA0BB;font-size:15px'>Your analysis result will appear here</div>
-                <div style='color:#AAB8CC;font-size:13px;margin-top:4px'>Select an example or paste your own article</div>
-            </div>""", unsafe_allow_html=True)
+            st.markdown("""
+            <div class="empty-state" style='margin-top:4rem'>
+                <span class="empty-icon">🔍</span>
+                <div class="empty-title">Analysis result will appear here</div>
+                <div class="empty-subtitle">Select an example or paste your own article, then click Analyze</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
 
 # ══════════════════════════════════════════════════════════════
 # DASHBOARD
 # ══════════════════════════════════════════════════════════════
 elif page == "Dashboard":
-    st.markdown("## Model Performance Dashboard")
-    st.markdown("Detailed performance metrics and visualizations of the trained LinearSVC model.")
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("""
+    <h2 style='font-size:1.7rem;font-weight:700;margin-bottom:4px'>Model Performance Dashboard</h2>
+    <p style='color:var(--text-secondary);font-size:14.5px;margin-bottom:1.5rem'>
+        Detailed metrics and visualizations of the trained LinearSVC model.
+    </p>
+    """, unsafe_allow_html=True)
 
-    c1,c2,c3,c4 = st.columns(4)
-    c1.metric("Test Accuracy", "99.73%", "+0.73%")
-    c2.metric("Precision", "99.8%", "+1.2%")
-    c3.metric("Recall", "99.7%", "+0.9%")
-    c4.metric("F1 Score", "99.7%", "+1.1%")
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Test Accuracy",  "99.73%", "+0.73%")
+    c2.metric("Precision",      "99.8%",  "+1.2%")
+    c3.metric("Recall",         "99.7%",  "+0.9%")
+    c4.metric("F1 Score",       "99.7%",  "+1.1%")
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    col1,col2 = st.columns(2)
+    st.markdown("<div style='height:1.5rem'></div>", unsafe_allow_html=True)
+
+    col1, col2 = st.columns(2, gap="medium")
     with col1:
-        st.markdown("#### Model Comparison")
+        st.markdown("""
+        <div style='
+            background:white;border:1px solid var(--border);
+            border-radius:var(--radius-md);padding:1.3rem 1.3rem 0.5rem;
+            box-shadow:var(--shadow-sm);
+        '>
+        <span class='section-label'>Algorithm Comparison</span>
+        """, unsafe_allow_html=True)
         df = pd.DataFrame({
-            "Model": ["Linear SVM","Passive Aggressive","Gradient Boosting","Decision Tree","Random Forest","Logistic Regression","Naive Bayes"],
-            "Accuracy": [99.73,99.71,99.65,99.64,99.60,99.22,96.33]
-        }).sort_values("Accuracy")
-        fig = px.bar(df, x="Accuracy", y="Model", orientation="h",
-                    color="Accuracy", color_continuous_scale="Blues", range_x=[94,100])
-        fig.update_layout(height=360, margin=dict(l=0,r=0,t=10,b=0),
-                          plot_bgcolor='white', paper_bgcolor='white')
-        st.plotly_chart(fig, use_container_width=True)
+            "Model":    ["Naive Bayes","Logistic Regression","Random Forest","Decision Tree","Gradient Boosting","Passive Aggressive","Linear SVM"],
+            "Accuracy": [96.33, 99.22, 99.60, 99.64, 99.65, 99.71, 99.73]
+        })
+        fig = px.bar(
+            df, x="Accuracy", y="Model", orientation="h",
+            color="Accuracy",
+            color_continuous_scale=["#BFDBFE", "#1A56CC"],
+            range_x=[94, 100],
+        )
+        fig.update_traces(marker_line_width=0)
+        fig.update_layout(
+            height=320,
+            margin=dict(l=0, r=0, t=10, b=0),
+            plot_bgcolor='white', paper_bgcolor='white',
+            coloraxis_showscale=False,
+            font=dict(family='DM Sans', size=12),
+            xaxis=dict(showgrid=True, gridcolor='#F1F5F9', tickfont=dict(size=11)),
+            yaxis=dict(showgrid=False),
+        )
+        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with col2:
-        st.markdown("#### Dataset Distribution")
+        st.markdown("""
+        <div style='
+            background:white;border:1px solid var(--border);
+            border-radius:var(--radius-md);padding:1.3rem 1.3rem 0.5rem;
+            box-shadow:var(--shadow-sm);
+        '>
+        <span class='section-label'>Dataset Distribution</span>
+        """, unsafe_allow_html=True)
         fig2 = go.Figure(data=[go.Pie(
-            labels=["Real News","Fake News"], values=[21417,23481],
-            hole=0.45, marker_colors=["#4CAF50","#E53935"],
-            textfont=dict(size=13)
+            labels=["Real News", "Fake News"],
+            values=[21417, 23481],
+            hole=0.5,
+            marker_colors=["#16A34A", "#DC2626"],
+            textfont=dict(size=13, family='DM Sans'),
+            pull=[0.02, 0.02],
         )])
-        fig2.update_layout(height=360, margin=dict(l=0,r=0,t=10,b=0),
-                           paper_bgcolor='white')
-        st.plotly_chart(fig2, use_container_width=True)
+        fig2.update_layout(
+            height=320,
+            margin=dict(l=0, r=0, t=10, b=0),
+            paper_bgcolor='white',
+            font=dict(family='DM Sans'),
+            legend=dict(font=dict(size=12)),
+        )
+        st.plotly_chart(fig2, use_container_width=True, config={"displayModeBar": False})
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    col3,col4 = st.columns(2)
+    st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
+
+    col3, col4 = st.columns(2, gap="medium")
     with col3:
-        st.markdown("#### Confusion Matrix")
+        st.markdown("""
+        <div style='
+            background:white;border:1px solid var(--border);
+            border-radius:var(--radius-md);padding:1.3rem 1.3rem 0.5rem;
+            box-shadow:var(--shadow-sm);
+        '>
+        <span class='section-label'>Confusion Matrix</span>
+        """, unsafe_allow_html=True)
         fig3 = go.Figure(data=go.Heatmap(
-            z=[[4280,12],[9,4283]],
-            x=["Predicted Fake","Predicted Real"],
-            y=["Actual Fake","Actual Real"],
-            colorscale="Blues", text=[[4280,12],[9,4283]], texttemplate="%{text}",
-            textfont=dict(size=14)
+            z=[[4280, 12], [9, 4283]],
+            x=["Predicted Fake", "Predicted Real"],
+            y=["Actual Fake", "Actual Real"],
+            colorscale=[[0, "#EFF6FF"], [1, "#1A56CC"]],
+            text=[[4280, 12], [9, 4283]],
+            texttemplate="<b>%{text}</b>",
+            textfont=dict(size=15, family='DM Sans'),
+            showscale=False,
         ))
-        fig3.update_layout(height=320, margin=dict(l=0,r=0,t=10,b=0),
-                           paper_bgcolor='white')
-        st.plotly_chart(fig3, use_container_width=True)
+        fig3.update_layout(
+            height=290,
+            margin=dict(l=0, r=0, t=10, b=0),
+            paper_bgcolor='white',
+            font=dict(family='DM Sans', size=12),
+        )
+        st.plotly_chart(fig3, use_container_width=True, config={"displayModeBar": False})
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with col4:
-        st.markdown("#### Classification Report")
-        st.dataframe(pd.DataFrame({
-            "Class": ["Fake News","Real News","Average"],
-            "Precision": ["99.8%","99.7%","99.7%"],
-            "Recall": ["99.8%","99.7%","99.7%"],
-            "F1-Score": ["99.8%","99.7%","99.7%"],
-        }), use_container_width=True, hide_index=True)
         st.markdown("""
-        **TF-IDF Settings:**
-        - Max features: 50,000
-        - N-gram range: (1, 2)
-        - Sublinear TF: True
-        - Stop words: English removed
-        """)
+        <div style='
+            background:white;border:1px solid var(--border);
+            border-radius:var(--radius-md);padding:1.3rem 1.3rem 1rem;
+            box-shadow:var(--shadow-sm);
+        '>
+        <span class='section-label'>Classification Report</span>
+        """, unsafe_allow_html=True)
+        st.dataframe(pd.DataFrame({
+            "Class":     ["Fake News", "Real News", "Average"],
+            "Precision": ["99.8%", "99.7%", "99.7%"],
+            "Recall":    ["99.8%", "99.7%", "99.7%"],
+            "F1-Score":  ["99.8%", "99.7%", "99.7%"],
+        }), use_container_width=True, hide_index=True)
+
+        st.markdown("<div style='height:0.6rem'></div>", unsafe_allow_html=True)
+        st.markdown("<span class='section-label'>TF-IDF Configuration</span>", unsafe_allow_html=True)
+        config_items = [
+            ("Max Features", "50,000"),
+            ("N-gram Range", "(1, 2)"),
+            ("Sublinear TF", "True"),
+            ("Stop Words", "English removed"),
+        ]
+        for k, v in config_items:
+            st.markdown(f"""
+            <div class='stat-row'>
+                <span class='stat-key'>{k}</span>
+                <span class='stat-val'>{v}</span>
+            </div>""", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+
 
 # ══════════════════════════════════════════════════════════════
 # HISTORY
 # ══════════════════════════════════════════════════════════════
 elif page == "History":
-    st.markdown("## Analysis History")
-    st.markdown("All articles you have analyzed in this session are recorded here automatically.")
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("""
+    <h2 style='font-size:1.7rem;font-weight:700;margin-bottom:4px'>Analysis History</h2>
+    <p style='color:var(--text-secondary);font-size:14.5px;margin-bottom:1.5rem'>
+        All articles you have analyzed in this session are recorded here automatically.
+    </p>
+    """, unsafe_allow_html=True)
 
     if len(st.session_state.history) == 0:
-        st.markdown("""<div class="empty-result">
-            <div style='font-size:2.5rem;margin-bottom:10px'>🕒</div>
-            <div style='color:#8CA0BB;font-size:15px;font-weight:500'>No articles checked yet</div>
-            <div style='color:#AAB8CC;font-size:13px;margin-top:4px'>Go to Detector and analyze some articles to see them here</div>
+        st.markdown("""
+        <div class="empty-state">
+            <span class="empty-icon">🕒</span>
+            <div class="empty-title">No articles analyzed yet</div>
+            <div class="empty-subtitle">Go to Detector and analyze some articles to see your history here</div>
         </div>""", unsafe_allow_html=True)
     else:
-        total = len(st.session_state.history)
-        real_count = sum(1 for h in st.session_state.history if h["prediction_raw"]==1)
+        total      = len(st.session_state.history)
+        real_count = sum(1 for h in st.session_state.history if h["prediction_raw"] == 1)
         fake_count = total - real_count
 
-        m1,m2,m3 = st.columns(3)
+        m1, m2, m3 = st.columns(3)
         m1.metric("Total Checked", total)
-        m2.metric("Real News", real_count)
-        m3.metric("Fake News", fake_count)
-        st.markdown("<br>", unsafe_allow_html=True)
+        m2.metric("Real News",     real_count)
+        m3.metric("Fake News",     fake_count)
 
-        if st.button("Clear History"):
-            st.session_state.history = []
-            st.rerun()
+        st.markdown("<div style='height:0.8rem'></div>", unsafe_allow_html=True)
+        col_clr, _ = st.columns([1, 5])
+        with col_clr:
+            if st.button("🗑  Clear History"):
+                st.session_state.history = []
+                st.rerun()
 
-        st.markdown("### Recent Checks")
+        st.markdown("<div style='height:0.8rem'></div>", unsafe_allow_html=True)
+        st.markdown("<span class='section-label'>Recent Checks</span>", unsafe_allow_html=True)
+
         for item in reversed(st.session_state.history):
-            bg    = "#F0FBF0" if item["prediction_raw"]==1 else "#FFF5F5"
-            bdr   = "#4CAF50" if item["prediction_raw"]==1 else "#E53935"
-            tc    = "#2E7D32" if item["prediction_raw"]==1 else "#C62828"
-            icon  = "✅" if item["prediction_raw"]==1 else "🚨"
+            is_real = item["prediction_raw"] == 1
+            item_class = "history-item-real" if is_real else "history-item-fake"
+            icon  = "✅" if is_real else "🚨"
+            tc    = "#15803D" if is_real else "#B91C1C"
             kws   = ", ".join(item["keywords"]) if item["keywords"] else "N/A"
             st.markdown(f"""
-            <div style='background:{bg};border-left:4px solid {bdr};border-radius:10px;
-                padding:1rem 1.2rem;margin-bottom:0.75rem;'>
-                <div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:6px'>
-                    <span style='color:{tc};font-size:15px;font-weight:700'>{icon} {item["prediction"]}</span>
-                    <span style='color:#999;font-size:12px'>{item["date"]}  ·  {item["time"]}</span>
+            <div class="{item_class}">
+                <div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:5px'>
+                    <span style='color:{tc};font-size:13.5px;font-weight:700'>{icon} {item["prediction"]}</span>
+                    <span style='color:var(--text-muted);font-size:11.5px'>{item["date"]} · {item["time"]}</span>
                 </div>
-                <div style='color:#333;font-size:13px;margin-bottom:4px'><b>Article:</b> {item["title"]}</div>
-                <div style='color:#666;font-size:12px;margin-bottom:3px'><b>Confidence:</b> Real {item["real_prob"]}%  |  Fake {item["fake_prob"]}%</div>
-                <div style='color:#666;font-size:12px'><b>Keywords:</b> {kws}</div>
+                <div style='color:var(--text-primary);font-size:13.5px;margin-bottom:4px;font-weight:500'>{item["title"]}</div>
+                <div style='display:flex;gap:16px;flex-wrap:wrap'>
+                    <span style='font-size:12px;color:var(--text-secondary)'><b>Real:</b> {item["real_prob"]}% &nbsp; <b>Fake:</b> {item["fake_prob"]}%</span>
+                    <span style='font-size:12px;color:var(--text-muted)'><b>Keywords:</b> {kws}</span>
+                </div>
             </div>""", unsafe_allow_html=True)
 
-        st.markdown("<br>")
-        st.markdown("#### Session Statistics")
-        fig_h = go.Figure(data=[go.Pie(
-            labels=["Real News","Fake News"],
-            values=[max(real_count,0), max(fake_count,0)],
-            hole=0.45, marker_colors=["#4CAF50","#E53935"]
-        )])
-        fig_h.update_layout(height=280, margin=dict(l=0,r=0,t=10,b=0), paper_bgcolor='white')
-        st.plotly_chart(fig_h, use_container_width=True)
+        st.markdown("<div style='height:1.2rem'></div>", unsafe_allow_html=True)
+        st.markdown("<span class='section-label'>Session Statistics</span>", unsafe_allow_html=True)
+
+        ch1, ch2 = st.columns([1, 1])
+        with ch1:
+            fig_h = go.Figure(data=[go.Pie(
+                labels=["Real News", "Fake News"],
+                values=[max(real_count, 0), max(fake_count, 0)],
+                hole=0.5,
+                marker_colors=["#16A34A", "#DC2626"],
+                pull=[0.02, 0.02],
+                textfont=dict(family='DM Sans', size=12),
+            )])
+            fig_h.update_layout(
+                height=250,
+                margin=dict(l=0, r=0, t=10, b=0),
+                paper_bgcolor='white',
+                font=dict(family='DM Sans'),
+                legend=dict(font=dict(size=12)),
+            )
+            st.plotly_chart(fig_h, use_container_width=True, config={"displayModeBar": False})
+
 
 # ══════════════════════════════════════════════════════════════
 # ABOUT
 # ══════════════════════════════════════════════════════════════
 elif page == "About":
-    st.markdown("## About FakeGuard")
-    st.markdown("Learn about the project, methodology, dataset, and technology behind FakeGuard.")
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("""
+    <h2 style='font-size:1.7rem;font-weight:700;margin-bottom:4px'>About FakeGuard</h2>
+    <p style='color:var(--text-secondary);font-size:14.5px;margin-bottom:1.5rem'>
+        Learn about the project, methodology, dataset, and technology stack behind FakeGuard.
+    </p>
+    """, unsafe_allow_html=True)
 
-    col1,col2 = st.columns([2,1])
+    col1, col2 = st.columns([2, 1], gap="large")
     with col1:
         st.markdown("""
-        ### Project Overview
-        FakeGuard is an AI-powered fake news detection system built using machine learning and
-        trained on the **Kaggle Fake and Real News Dataset** containing over 44,000 news articles.
-        Real news was sourced from Reuters.com and fake news from websites flagged by fact-checking
-        organizations. The system achieves 99.73% accuracy using a LinearSVC model with TF-IDF features.
+        <div style='
+            background:white;border:1px solid var(--border);
+            border-radius:var(--radius-md);padding:1.8rem;
+            box-shadow:var(--shadow-sm);
+        '>
+        """, unsafe_allow_html=True)
 
-        ### Methodology
+        st.markdown("""
+        #### Project Overview
+        FakeGuard is an AI-powered fake news detection system built using machine learning,
+        trained on the **Kaggle Fake and Real News Dataset** containing over 44,000 news articles.
+        Real news was sourced from Reuters.com; fake news from sites flagged by fact-checking
+        organizations. The system achieves **99.73% accuracy** using a LinearSVC model with TF-IDF features.
+
+        #### Methodology
         - **Data Collection:** 44,898 articles — 21,417 real from Reuters + 23,481 fake from flagged sites
         - **Preprocessing:** Title and text combined, TF-IDF vectorization with 50,000 features
         - **Model Selection:** 7 algorithms compared — LinearSVC achieved best accuracy of 99.73%
-        - **Evaluation:** 80/20 stratified train-test split with 5-fold cross validation
+        - **Evaluation:** 80/20 stratified train-test split with 5-fold cross-validation
 
-        ### New AI Features
-        - **Top Keywords** — Words that most influenced the prediction, shown as colored pills
-        - **Probability Bar** — Visual confidence score split between Real and Fake percentages
-        - **History Tracking** — Session-based log of all analyzed articles with full details
+        #### AI Features
+        - **Top Keywords** — Colored pills showing which words most influenced the prediction
+        - **Probability Bar** — Visual confidence split between Real and Fake percentages
+        - **History Tracking** — Session-based log of all analyzed articles
         - **AI Explanation** — Human-readable reasoning behind every prediction
-
-        ### Tech Stack
         """)
-        t1,t2,t3,t4 = st.columns(4)
-        for col,(tech,color) in zip([t1,t2,t3,t4],[
-            ("Python","#3776AB"),("Scikit-learn","#F7931E"),
-            ("Streamlit","#FF4B4B"),("Plotly","#3D4DB7")]):
-            col.markdown(f"""<div style='background:{color};color:white;border-radius:10px;
-                padding:0.6rem;text-align:center;font-size:13px;font-weight:600'>{tech}</div>""",
-                unsafe_allow_html=True)
+
+        st.markdown("<div style='height:0.5rem'></div>", unsafe_allow_html=True)
+        st.markdown("<span class='section-label'>Tech Stack</span>", unsafe_allow_html=True)
+        t1, t2, t3, t4 = st.columns(4)
+        techs = [("Python", "#3776AB"), ("Scikit-learn", "#F7931E"), ("Streamlit", "#FF4B4B"), ("Plotly", "#3D4DB7")]
+        for col, (tech, color) in zip([t1, t2, t3, t4], techs):
+            col.markdown(f"""
+            <div class="tech-badge" style="background:{color};">{tech}</div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with col2:
-        st.markdown("### Model Stats")
-        stats = {"Accuracy":"99.73%","Precision":"99.8%","Recall":"99.7%","F1-Score":"99.7%",
-                 "Train Size":"35,278","Test Size":"8,820","Features":"50,000","Algorithm":"LinearSVC"}
-        for k,v in stats.items():
-            st.markdown(f"""<div style='display:flex;justify-content:space-between;
-                padding:6px 0;border-bottom:1px solid #EEE;font-size:13px'>
-                <span style='color:#666'>{k}</span>
-                <span style='color:#185FA5;font-weight:600'>{v}</span>
+        st.markdown("""
+        <div style='
+            background:white;border:1px solid var(--border);
+            border-radius:var(--radius-md);padding:1.5rem;
+            box-shadow:var(--shadow-sm);
+        '>
+        <span class='section-label'>Model Stats</span>
+        """, unsafe_allow_html=True)
+
+        stats = {
+            "Accuracy":   "99.73%",
+            "Precision":  "99.8%",
+            "Recall":     "99.7%",
+            "F1-Score":   "99.7%",
+            "Train Size": "35,278",
+            "Test Size":  "8,820",
+            "Features":   "50,000",
+            "Algorithm":  "LinearSVC",
+        }
+        for k, v in stats.items():
+            st.markdown(f"""
+            <div class='stat-row'>
+                <span class='stat-key'>{k}</span>
+                <span class='stat-val'>{v}</span>
             </div>""", unsafe_allow_html=True)
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("### Dataset Information")
-    d1,d2,d3 = st.columns(3)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown("<div style='height:1.2rem'></div>", unsafe_allow_html=True)
+    st.markdown("<span class='section-label'>Dataset Information</span>", unsafe_allow_html=True)
+
+    d1, d2, d3 = st.columns(3, gap="medium")
     cards = [
-        ("📰 Real News","21,417 articles from Reuters.com, one of the world's most trusted and reliable international news agencies.","#2E7D32","#E8F5E9","#A5D6A7"),
-        ("🚨 Fake News","23,481 articles collected from websites flagged as unreliable by international fact-checking organizations.","#C62828","#FFEBEE","#EF9A9A"),
-        ("📊 Total Dataset","44,898 articles covering politics, world news, technology, government, and social topics from 2015 to 2018.","#185FA5","#E8F4FD","#90CAF9"),
+        ("📰 Real News",    "21,417 articles from Reuters.com, one of the world's most trusted international news agencies.",
+         "#166534", "#F0FDF4", "#86EFAC"),
+        ("🚨 Fake News",    "23,481 articles collected from websites flagged as unreliable by fact-checking organizations.",
+         "#991B1B", "#FEF2F2", "#FCA5A5"),
+        ("📊 Total Dataset","44,898 articles covering politics, tech, and world news from 2015–2018.",
+         "#1E40AF", "#EFF6FF", "#93C5FD"),
     ]
-    for col,(title,desc,tc,bg,bdr) in zip([d1,d2,d3],cards):
+    for col, (title, desc, tc, bg, bdr) in zip([d1, d2, d3], cards):
         with col:
-            st.markdown(f"""<div style='background:{bg};border:1px solid {bdr};border-radius:14px;
-                padding:1.4rem;'>
-                <div style='font-size:16px;font-weight:700;color:{tc};margin-bottom:8px'>{title}</div>
-                <div style='font-size:13px;color:#555;line-height:1.6'>{desc}</div>
+            st.markdown(f"""
+            <div class="dataset-card" style='background:{bg};border-color:{bdr};'>
+                <div style='font-size:15px;font-weight:700;color:{tc};margin-bottom:8px'>{title}</div>
+                <div style='font-size:13px;color:#374151;line-height:1.65'>{desc}</div>
             </div>""", unsafe_allow_html=True)
+
 
 # ══════════════════════════════════════════════════════════════
 # FAQ
 # ══════════════════════════════════════════════════════════════
 elif page == "FAQ":
-    st.markdown("## Frequently Asked Questions")
-    st.markdown("Find answers to common questions about FakeGuard, its features, and how it works.")
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("""
+    <h2 style='font-size:1.7rem;font-weight:700;margin-bottom:4px'>Frequently Asked Questions</h2>
+    <p style='color:var(--text-secondary);font-size:14.5px;margin-bottom:1.5rem'>
+        Find answers to common questions about FakeGuard, its features, and how it works.
+    </p>
+    """, unsafe_allow_html=True)
 
     faqs = [
         ("What is FakeGuard?",
@@ -727,18 +1522,35 @@ elif page == "FAQ":
          "FakeGuard is built with Python, Scikit-learn for the LinearSVC and TF-IDF pipeline, Streamlit for the web interface, Plotly for interactive charts, and Pandas for data handling. The model is saved and loaded using Python's Pickle library."),
     ]
 
-    for q,a in faqs:
+    for q, a in faqs:
         with st.expander(q):
-            st.markdown(f"<div style='font-size:14px;color:#333;line-height:1.7;padding:4px 0'>{a}</div>",
+            st.markdown(f"<div style='font-size:14px;color:var(--text-secondary);line-height:1.75;padding:4px 0'>{a}</div>",
                         unsafe_allow_html=True)
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.info("FakeGuard is open source. Visit the GitHub repository for the complete code.")
+    st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
+    st.info("💡 FakeGuard is an open-source portfolio project. The complete code is available on GitHub.")
 
-# ── Footer ────────────────────────────────────────────────────
-st.markdown("---")
-st.markdown("""<p style='text-align:center;color:#AAB;font-size:12px;padding:4px 0'>
-    FakeGuard &nbsp;·&nbsp; Built with Scikit-learn + Streamlit
-    &nbsp;·&nbsp; Kaggle Fake &amp; Real News Dataset
-    &nbsp;·&nbsp; 99.7% Accuracy
-</p>""", unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════════════════
+# FOOTER
+# ══════════════════════════════════════════════════════════════
+st.markdown("<div style='height:1.5rem'></div>", unsafe_allow_html=True)
+st.markdown("""
+<div style='
+    border-top: 1px solid var(--border);
+    padding: 1.2rem 0 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: wrap;
+'>
+    <span style='font-size: 12px; color: #94A3B8;'>FakeGuard</span>
+    <span style='color: #CBD5E1; font-size: 11px;'>·</span>
+    <span style='font-size: 12px; color: #94A3B8;'>Scikit-learn + Streamlit</span>
+    <span style='color: #CBD5E1; font-size: 11px;'>·</span>
+    <span style='font-size: 12px; color: #94A3B8;'>Kaggle Fake &amp; Real News Dataset</span>
+    <span style='color: #CBD5E1; font-size: 11px;'>·</span>
+    <span style='font-size: 12px; color: #94A3B8;'>99.7% Accuracy</span>
+</div>
+""", unsafe_allow_html=True)
