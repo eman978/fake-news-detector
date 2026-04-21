@@ -1,9 +1,12 @@
 import streamlit as st
 import pickle
+import random
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 import numpy as np
+import matplotlib.pyplot as plt
+from wordcloud import WordCloud, STOPWORDS
 from datetime import datetime
 
 st.set_page_config(page_title="FakeGuard - Fake News Detector", page_icon="📰", layout="wide")
@@ -966,39 +969,53 @@ elif page == "Detector":
 
     col_left, col_right = st.columns([1, 1], gap="large")
 
+    # ── Session state defaults for inputs ──
+    if "title_input" not in st.session_state:
+        st.session_state.title_input = ""
+    if "news_input" not in st.session_state:
+        st.session_state.news_input = ""
+
     with col_left:
         st.markdown("<span class='section-label'>Example Library</span>", unsafe_allow_html=True)
         category = st.selectbox(
             "Category",
             ["— Choose a category —"] + list(examples_db.keys()),
-            label_visibility="collapsed"
+            label_visibility="collapsed",
+            key="category_select",
         )
-        title_default, text_default = "", ""
         if category != "— Choose a category —":
             example_list = examples_db[category]
             example_titles = ["— Choose an example —"] + [e[0] for e in example_list]
-            chosen = st.selectbox("Example", example_titles, label_visibility="collapsed")
+            chosen = st.selectbox(
+                "Example", example_titles, label_visibility="collapsed", key="example_select"
+            )
             if chosen != "— Choose an example —":
                 for t, txt in example_list:
                     if t == chosen:
-                        title_default, text_default = t, txt
+                        if (
+                            st.session_state.title_input != t
+                            or st.session_state.news_input != txt
+                        ):
+                            st.session_state.title_input = t
+                            st.session_state.news_input = txt
+                            st.rerun()
                         break
 
         st.markdown("<div style='height:0.8rem'></div>", unsafe_allow_html=True)
         st.markdown("<span class='section-label'>Article Input</span>", unsafe_allow_html=True)
         title_input = st.text_input(
             "Article Title",
-            value=title_default,
             placeholder="Enter the article headline…",
-            label_visibility="collapsed"
+            label_visibility="collapsed",
+            key="title_input",
         )
         st.markdown("<div style='height:0.3rem'></div>", unsafe_allow_html=True)
         news_input = st.text_area(
             "Article Body",
-            value=text_default,
             height=200,
             placeholder="Paste the full news article content here…",
-            label_visibility="collapsed"
+            label_visibility="collapsed",
+            key="news_input",
         )
 
         # Word count indicator
@@ -1010,7 +1027,26 @@ elif page == "Detector":
         </div>
         """, unsafe_allow_html=True)
 
-        analyze = st.button("🔍  Analyze Article", use_container_width=True)
+        # ── Action buttons: Analyze (primary) + Load Sample + Clear ──
+        b1, b2, b3 = st.columns([2, 1, 1])
+        with b1:
+            analyze = st.button(
+                "🔍  Analyze Article", use_container_width=True, type="primary"
+            )
+        with b2:
+            if st.button("🎲  Load Sample", use_container_width=True):
+                all_examples = [
+                    item for items in examples_db.values() for item in items
+                ]
+                t, txt = random.choice(all_examples)
+                st.session_state.title_input = t
+                st.session_state.news_input = txt
+                st.rerun()
+        with b3:
+            if st.button("🧹  Clear", use_container_width=True):
+                st.session_state.title_input = ""
+                st.session_state.news_input = ""
+                st.rerun()
 
     with col_right:
         st.markdown("<span class='section-label'>Analysis Result</span>", unsafe_allow_html=True)
@@ -1092,6 +1128,34 @@ elif page == "Detector":
                 kw_class = "keyword-fake" if prediction == 0 else "keyword-real"
                 kw_html = "".join([f'<span class="{kw_class}">{w}</span>' for w, _ in keywords])
                 st.markdown(f"<div style='margin-top:4px;line-height:2.2'>{kw_html}</div>", unsafe_allow_html=True)
+
+                st.markdown("<div style='height:0.8rem'></div>", unsafe_allow_html=True)
+
+                # ── Word Cloud ──
+                st.markdown("<span class='section-label'>Word Cloud</span>", unsafe_allow_html=True)
+                try:
+                    cloud_colormap = "Reds" if prediction == 0 else "Greens"
+                    cloud_bg = "#FEF2F2" if prediction == 0 else "#F0FDF4"
+                    wc_obj = WordCloud(
+                        width=900,
+                        height=380,
+                        background_color=cloud_bg,
+                        colormap=cloud_colormap,
+                        stopwords=set(STOPWORDS),
+                        max_words=80,
+                        prefer_horizontal=0.95,
+                        relative_scaling=0.5,
+                        margin=4,
+                    ).generate(combined)
+                    fig_wc, ax_wc = plt.subplots(figsize=(9, 3.8))
+                    ax_wc.imshow(wc_obj, interpolation="bilinear")
+                    ax_wc.axis("off")
+                    fig_wc.patch.set_facecolor(cloud_bg)
+                    plt.tight_layout(pad=0)
+                    st.pyplot(fig_wc, use_container_width=True)
+                    plt.close(fig_wc)
+                except Exception:
+                    st.caption("Word cloud unavailable for this input.")
 
                 st.markdown("<div style='height:0.8rem'></div>", unsafe_allow_html=True)
 
