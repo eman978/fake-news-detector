@@ -769,17 +769,14 @@ with st.sidebar:
 
     st.markdown("<div style='padding: 0 0.25rem;'>", unsafe_allow_html=True)
     page = st.radio("", [
-        "🏠  Home",
-        "🔍  Detector",
-        "📊  Dashboard",
-        "🕒  History",
-        "ℹ️  About",
-        "❓  FAQ"
+        "Home",
+        "Detector",
+        "Dashboard",
+        "History",
+        "About",
+        "FAQ"
     ], label_visibility="collapsed")
     st.markdown("</div>", unsafe_allow_html=True)
-
-    # Strip icon prefix for logic
-    page = page.split("  ", 1)[1] if "  " in page else page
 
     st.markdown("<hr style='border:none;border-top:1px solid rgba(255,255,255,0.08);margin:1rem 0'>", unsafe_allow_html=True)
 
