@@ -967,16 +967,6 @@ elif page == "Detector":
     col_left, col_right = st.columns([1, 1], gap="large")
 
     with col_left:
-        st.markdown("""
-        <div style='
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            padding: 1.5rem;
-            box-shadow: var(--shadow-sm);
-        '>
-        """, unsafe_allow_html=True)
-
         st.markdown("<span class='section-label'>Example Library</span>", unsafe_allow_html=True)
         category = st.selectbox(
             "Category",
@@ -1021,20 +1011,8 @@ elif page == "Detector":
         """, unsafe_allow_html=True)
 
         analyze = st.button("🔍  Analyze Article", use_container_width=True)
-        st.markdown("</div>", unsafe_allow_html=True)
 
     with col_right:
-        st.markdown("""
-        <div style='
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            padding: 1.5rem;
-            box-shadow: var(--shadow-sm);
-            min-height: 520px;
-        '>
-        """, unsafe_allow_html=True)
-
         st.markdown("<span class='section-label'>Analysis Result</span>", unsafe_allow_html=True)
 
         if analyze:
@@ -1156,8 +1134,6 @@ elif page == "Detector":
                 <div class="empty-subtitle">Select an example or paste your own article, then click Analyze</div>
             </div>
             """, unsafe_allow_html=True)
-
-        st.markdown("</div>", unsafe_allow_html=True)
 
 
 # ══════════════════════════════════════════════════════════════
@@ -1397,14 +1373,6 @@ elif page == "About":
     col1, col2 = st.columns([2, 1], gap="large")
     with col1:
         st.markdown("""
-        <div style='
-            background:white;border:1px solid var(--border);
-            border-radius:var(--radius-md);padding:1.8rem;
-            box-shadow:var(--shadow-sm);
-        '>
-        """, unsafe_allow_html=True)
-
-        st.markdown("""
         #### Project Overview
         FakeGuard is an AI-powered fake news detection system built using machine learning,
         trained on the **Kaggle Fake and Real News Dataset** containing over 44,000 news articles.
@@ -1433,17 +1401,8 @@ elif page == "About":
             <div class="tech-badge" style="background:{color};">{tech}</div>
             """, unsafe_allow_html=True)
 
-        st.markdown("</div>", unsafe_allow_html=True)
-
     with col2:
-        st.markdown("""
-        <div style='
-            background:white;border:1px solid var(--border);
-            border-radius:var(--radius-md);padding:1.5rem;
-            box-shadow:var(--shadow-sm);
-        '>
-        <span class='section-label'>Model Stats</span>
-        """, unsafe_allow_html=True)
+        st.markdown("<span class='section-label'>Model Stats</span>", unsafe_allow_html=True)
 
         stats = {
             "Accuracy":   "99.73%",
@@ -1461,8 +1420,6 @@ elif page == "About":
                 <span class='stat-key'>{k}</span>
                 <span class='stat-val'>{v}</span>
             </div>""", unsafe_allow_html=True)
-
-        st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("<div style='height:1.2rem'></div>", unsafe_allow_html=True)
     st.markdown("<span class='section-label'>Dataset Information</span>", unsafe_allow_html=True)
